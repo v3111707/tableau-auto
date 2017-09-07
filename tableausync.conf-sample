@@ -1,0 +1,15 @@
+[Common]
+do_something = t
+
+[AD]
+server = dc1.firma.loc
+user = tableau-bot
+password = ********
+tableau_root_ou = OU=Tableau,DC=firma,DC=loc
+users_root_ou = DC=firma,DC=loc
+
+[Tableau]
+server = https://tableau.firma.loc
+password = ******
+username = sadmin
+serviceAccounts = bot1,bot2,sadmin
