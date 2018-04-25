@@ -1,3 +1,5 @@
+#!/usr/bin/env python3.4
+
 import sys, os, time, random, string
 import configparser
 import logging
@@ -42,7 +44,7 @@ class AD:
             self.logger.info("A connection was successfully established with the {0}".format(server))
 
         except Exception as e:
-            self.logger.debug("Failed to connect to {0}".format(server))
+            self.logger.info("Failed to connect to {0}".format(server))
             self.logger.debug(e)
             sys.exit()
 
@@ -177,6 +179,9 @@ def main():
 
     ad_ous = ad.get_tableau_ous()
     tableau_sites = [site for site in TSC.Pager(tableau.sites)]
+    logger.info("Tableau sites: {0}".format([s.name for s in tableau_sites]))
+    logger.info("AD OUs: {0}".format([ou.get('name') for ou in ad_ous]))
+
     for current_site in tableau_sites:
         if any(current_site.name in ad_ou.get('name') for ad_ou in ad_ous):
             logger.info("Tableau site: {0}".format(current_site.name))
@@ -218,7 +223,7 @@ def main():
                     else:
                         logger.debug("Creating user: {0}".format(new_user))
                         ad_user_data = ad.get_user_by_samaccountname(new_user)
-                        password = ''.join(random.choices(string.ascii_letters + string.digits, k=32))
+                        password = ''.join(random.choice(string.ascii_letters + string.digits) for x in range(32))
                         new_user = TSC.UserItem(name=ad_user_data[0].sAMAccountName.value,
                                             site_role='Interactor')
                         new_user = tableau.users.add(new_user)
