@@ -8,7 +8,8 @@ import random
 import string
 import re
 import tableauserverclient as TSC
-from ldap3 import Server, Connection, SUBTREE, LEVEL, ALL_ATTRIBUTES, BASE
+import ldap3
+from ldap3 import SUBTREE, LEVEL, ALL_ATTRIBUTES, BASE
 from ZabbixSender import ZabbixSender, ZabbixPacket
 
 
@@ -38,8 +39,8 @@ class AD:
         self.tableau_root_ou = tableau_root_ou
         self.users_root_ou = users_root_ou
         try:
-            server = Server(ad_server, use_ssl=True)
-            self.conn = Connection(server, user=ad_user, password=ad_password, raise_exceptions=True)
+            server = ldap3.Server(ad_server, use_ssl=True)
+            self.conn = ldap3.Connection(server, user=ad_user, password=ad_password, raise_exceptions=True)
             self.conn.bind()
             self.logger.info("A connection was successfully established with the {0}".format(server))
 
@@ -128,7 +129,8 @@ class AD:
         return result
 
     def get_group_by_samaccountname(self, samaccountname):
-        result = self._search(self.tableau_root_ou, '(Name={0})'.format(samaccountname), SUBTREE,
+        samaccountname_escaped = ldap3.utils.conv.escape_filter_chars(samaccountname)
+        result = self._search(self.tableau_root_ou, '(Name={0})'.format(samaccountname_escaped), SUBTREE,
                               ['distinguishedName', 'name', 'member'])
         return result
 
@@ -205,7 +207,7 @@ def main():
                 for old_user in old_users:
                     logger.debug("Deleting user: {0}".format(old_user.name))
                     tableau.users.populate_workbooks(old_user)
-                    if old_user.workbooks.__len__() > 0:
+                    if old_user.workbooks._count > 0:
                         old_user.site_role = 'Unlicensed'
                         tableau.users.update(old_user)
                     else:
