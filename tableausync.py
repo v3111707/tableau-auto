@@ -188,7 +188,7 @@ def main():
 
     for current_site in tableau_sites:
         if any(current_site.name in ad_ou.get('name') for ad_ou in ad_ous):
-            logger.info("\n#########################")
+            print('\n\n')
             logger.info("Tableau site: {0} ".format(current_site.name))
             tableau_auth = TSC.TableauAuth(tableau_admin, tableau_password, current_site.content_url)
             tableau.auth.sign_in(tableau_auth)
