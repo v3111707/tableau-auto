@@ -188,7 +188,7 @@ def main():
 
     for current_site in tableau_sites:
         if any(current_site.name in ad_ou.get('name') for ad_ou in ad_ous):
-            print('\n\n')
+            print('\n')
             logger.info("Tableau site: {0} ".format(current_site.name))
             tableau_auth = TSC.TableauAuth(tableau_admin, tableau_password, current_site.content_url)
             tableau.auth.sign_in(tableau_auth)
@@ -215,7 +215,7 @@ def main():
                 for old_user in old_users:
                     logger.debug("Deleting user: {0}".format(old_user.name))
                     tableau.users.populate_workbooks(old_user)
-                    if old_user.workbooks._count > 0:
+                    if len(old_user.workbooks) > 0:
                         old_user.site_role = 'Unlicensed'
                         tableau.users.update(old_user)
                     else:
