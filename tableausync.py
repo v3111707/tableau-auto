@@ -183,7 +183,9 @@ def main():
     tableau_sites = [site for site in TSC.Pager(tableau.sites)]
     logger.info("Tableau sites: {0}".format([s.name for s in tableau_sites]))
     logger.info("AD OUs: {0}".format([ou.get('name') for ou in ad_ous]))
+
     #tableau_sites = [t for t in tableau_sites if t.name == 'ERS']
+
     for current_site in tableau_sites:
         if any(current_site.name in ad_ou.get('name') for ad_ou in ad_ous):
             logger.info("Tableau site: {0}".format(current_site.name))
@@ -207,7 +209,7 @@ def main():
                 old_users = []
             # End ugly code
 
-            logger.debug("Old users: {0}".format(old_users_set))
+            logger.info("Old users: {0}".format([u.name for u in old_users]))
             if do_something:
                 for old_user in old_users:
                     logger.debug("Deleting user: {0}".format(old_user.name))
@@ -218,7 +220,7 @@ def main():
                     else:
                         tableau.users.remove(old_user.id)
 
-            logger.debug("New users: {0}".format(new_users_set))
+            logger.info("New users: {0}".format(new_users_set))
             if do_something:
                 for new_user in new_users_set:
                     if new_user in [user.name for user in tableau_unlicensed_users]:
@@ -267,13 +269,13 @@ def main():
             # End ugly code
 
             old_groups.remove('All Users')
-            logger.debug("New groups{0}".format(new_groups))
+            logger.info("New groups{0}".format(new_groups))
             if do_something:
                 for new_group in new_groups:
                     newgroup = TSC.GroupItem(new_group)
                     tableau.groups.create(newgroup)
 
-            logger.debug("Old groups{0}".format(old_groups))
+            logger.info("Old groups{0}".format(old_groups))
             if do_something:
                 for old_group in old_groups:
                     group_id = [group.id for group in tableau_site_groups if group.name == old_group]
@@ -298,8 +300,10 @@ def main():
                     new_members_set = ad_members_set - tableau_members_set
                     old_members_set = tableau_members_set - ad_members_set
 
-                    logger.debug("New members:{0}".format(new_members_set))
-                    logger.debug("Old members{0}".format(old_members_set))
+                    if new_members_set != set():
+                        logger.info("{0}, new members:{1} ".format(group.name, new_members_set))
+                    if old_members_set != set():
+                        logger.info("{0}, old members{1}".format(group.name, old_members_set))
 
                     if do_something:
                         for new_member in new_members_set:
