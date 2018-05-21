@@ -188,7 +188,8 @@ def main():
 
     for current_site in tableau_sites:
         if any(current_site.name in ad_ou.get('name') for ad_ou in ad_ous):
-            logger.info("Tableau site: {0}".format(current_site.name))
+            logger.info("\n#########################")
+            logger.info("Tableau site: {0} ".format(current_site.name))
             tableau_auth = TSC.TableauAuth(tableau_admin, tableau_password, current_site.content_url)
             tableau.auth.sign_in(tableau_auth)
             tableau_all_site_users = [user for user in TSC.Pager(tableau.users) if user.site_role != 'Unlicensed']
@@ -269,13 +270,13 @@ def main():
             # End ugly code
 
             old_groups.remove('All Users')
-            logger.info("New groups{0}".format(new_groups))
+            logger.info("New groups {0}".format(new_groups))
             if do_something:
                 for new_group in new_groups:
                     newgroup = TSC.GroupItem(new_group)
                     tableau.groups.create(newgroup)
 
-            logger.info("Old groups{0}".format(old_groups))
+            logger.info("Old groups {0}".format(old_groups))
             if do_something:
                 for old_group in old_groups:
                     group_id = [group.id for group in tableau_site_groups if group.name == old_group]
