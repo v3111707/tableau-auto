@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.4
+#!/usr/bin/env python
 
 import sys, os, time, random, string
 import configparser
@@ -183,7 +183,7 @@ def main():
     tableau_sites = [site for site in TSC.Pager(tableau.sites)]
     logger.info("Tableau sites: {0}".format([s.name for s in tableau_sites]))
     logger.info("AD OUs: {0}".format([ou.get('name') for ou in ad_ous]))
-
+    #tableau_sites = [t for t in tableau_sites if t.name == 'ERS']
     for current_site in tableau_sites:
         if any(current_site.name in ad_ou.get('name') for ad_ou in ad_ous):
             logger.info("Tableau site: {0}".format(current_site.name))
@@ -201,6 +201,11 @@ def main():
             old_users_set -= set(tableau_service_accounts)
             old_users = [tableau_all_site_user for tableau_all_site_user in tableau_all_site_users if
                          any(olduser == tableau_all_site_user.name for olduser in old_users_set)]
+
+            # This ugly code, but I was forced to write this.
+            if current_site.name == 'ERS':
+                old_users = []
+            # End ugly code
 
             logger.debug("Old users: {0}".format(old_users_set))
             if do_something:
@@ -241,11 +246,12 @@ def main():
                            tableau_service_accounts):
                     tableau_user = tableau.users.get_by_id(site_user.id)
                     ad_user = ad.get_user_by_samaccountname(site_user.name)
-                    if tableau_user.fullname != ad_user[0].name.value and do_something:
-                        logger.info("Changing userdata {0}".format(tableau_user.name))
-                        tableau_user.fullname = ad_user[0].name.value
-                        tableau_user.email = ad_user[0].mail.value
-                        tableau.users.update(tableau_user)
+                    if ad_user != []:
+                        if tableau_user.fullname != ad_user[0].name.value and do_something:
+                            logger.info("Changing userdata {0}".format(tableau_user.name))
+                            tableau_user.fullname = ad_user[0].name.value
+                            tableau_user.email = ad_user[0].mail.value
+                            tableau.users.update(tableau_user)
 
             logger.info('Revision groups on site')
             ad_site_groups = [group.name.value for group in ad.get_site_groups(current_site)]
@@ -254,8 +260,13 @@ def main():
                 [tablesu_site_group.name for tablesu_site_group in tableau_site_groups])
             old_groups = set([tableau_site_group.name for tableau_site_group in tableau_site_groups]) - set(
                 ad_site_groups)
-            old_groups.remove('All Users')
 
+            #This ugly code, but I was forced to write this.
+            if current_site.name == 'ERS':
+                old_groups = [t for t in old_groups if not(t.startswith('F_') or t.startswith('A_'))]
+            # End ugly code
+
+            old_groups.remove('All Users')
             logger.debug("New groups{0}".format(new_groups))
             if do_something:
                 for new_group in new_groups:
@@ -271,6 +282,13 @@ def main():
             logger.info('Revision group members on site')
             all_tableau_groups = [group for group in TSC.Pager(tableau.groups)]
             opts = TSC.RequestOptions(pagesize=1000)
+
+            # This ugly code, but I was forced to write this.
+            if current_site.name == 'ERS':
+                all_tableau_groups = [t for t in all_tableau_groups if
+                                      not (t.name.startswith('F_') or t.name.startswith('A_'))]
+            # End ugly code
+
             for group in all_tableau_groups:
                 if group.name != 'All Users':
                     tableau.groups.populate_users(group, opts)
