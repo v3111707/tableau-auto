@@ -215,11 +215,11 @@ def main():
                 for old_user in old_users:
                     tableau.users.populate_workbooks(old_user)
                     if len(old_user.workbooks) > 0:
-                        logger.debug("set role Unlicensed, user: {0}".format(old_user.name))
+                        tbl_logger.debug("set role Unlicensed, user: {0}".format(old_user.name))
                         old_user.site_role = 'Unlicensed'
                         tableau.users.update(old_user)
                     else:
-                        logger.debug("Deleting user: {0}".format(old_user.name))
+                        tbl_logger.debug("Deleting user: {0}".format(old_user.name))
                         tableau.users.remove(old_user.id)
 
             logger.info("New users: {0}".format(new_users_set))
