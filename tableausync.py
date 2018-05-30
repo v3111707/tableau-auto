@@ -184,7 +184,7 @@ def main():
     logger.info("Tableau sites: {0}".format([s.name for s in tableau_sites]))
     logger.info("AD OUs: {0}".format([ou.get('name') for ou in ad_ous]))
 
-    #tableau_sites = [t for t in tableau_sites if t.name == 'ERS']
+    #tableau_sites = [t for t in tableau_sites if t.name == '']
 
     for current_site in tableau_sites:
         if any(current_site.name in ad_ou.get('name') for ad_ou in ad_ous):
@@ -291,7 +291,7 @@ def main():
                 all_tableau_groups = [t for t in all_tableau_groups if
                                       not (t.name.startswith('F_') or t.name.startswith('A_'))]
             # End ugly code
-
+            tableau_all_site_users = [user for user in TSC.Pager(tableau.users)]
             for group in all_tableau_groups:
                 if group.name != 'All Users':
                     tableau.groups.populate_users(group, opts)
