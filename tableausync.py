@@ -72,7 +72,7 @@ class AD:
         users = []
         result = self._search(dn, '(objectClass=*)')
         self.logger.debug("Get users form {0}".format(result[0].name.value))
-        if 'member' in str(result):
+        if ' member: ' in str(result):
             for member in result[0].member:
                 ad_object = self._get_object_data(member)
                 if ad_object.objectCategory.value.startswith('CN=Person'):
