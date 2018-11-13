@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python36
 
 import sys, os, time, random, string
 import configparser
@@ -160,7 +160,7 @@ def main():
     ad_password = config.get('AD', 'password')
     tableau_root_ou = config.get('AD', 'tableau_root_ou')
     users_root_ou = config.get('AD', 'users_root_ou')
-    tableau_server = config.get('Tableau', 'server')
+    config_tableau_server = config.get('Tableau', 'server')
     tableau_admin = config.get('Tableau', 'username')
     tableau_password = config.get('Tableau', 'password')
     tableau_service_accounts = config.get('Tableau', 'serviceAccounts').split(',')
@@ -170,12 +170,12 @@ def main():
     ad = AD(ad_server, ad_user, ad_password, tableau_root_ou, users_root_ou)
 
     tableau_auth = TSC.TableauAuth(tableau_admin, tableau_password)
-    tableau = TSC.Server(tableau_server)
+    tableau = TSC.Server(config_tableau_server)
 
     try:
         tableau.auth.sign_in(tableau_auth)
     except Exception as e:
-        logger.debug("Failed to connect to {0}".format(tableau_server))
+        logger.debug("Failed to connect to {0}".format(config_tableau_server))
         logger.debug(e.message)
         sys.exit()
 
@@ -183,8 +183,6 @@ def main():
     tableau_sites = [site for site in TSC.Pager(tableau.sites)]
     logger.info("Tableau sites: {0}".format([s.name for s in tableau_sites]))
     logger.info("AD OUs: {0}".format([ou.get('name') for ou in ad_ous]))
-
-    #tableau_sites = [t for t in tableau_sites if t.name == '']
 
     for current_site in tableau_sites:
         if any(current_site.name in ad_ou.get('name') for ad_ou in ad_ous):
@@ -214,13 +212,19 @@ def main():
             if do_something:
                 for old_user in old_users:
                     tableau.users.populate_workbooks(old_user)
-                    if len(old_user.workbooks) > 0:
+                    if old_user.workbooks._count > 0:
                         tbl_logger.debug("set role Unlicensed, user: {0}".format(old_user.name))
                         old_user.site_role = 'Unlicensed'
-                        tableau.users.update(old_user)
+                        try:
+                            tableau.users.update(old_user)
+                        except:
+                            pass
                     else:
                         tbl_logger.debug("Deleting user: {0}".format(old_user.name))
-                        tableau.users.remove(old_user.id)
+                        try:
+                            tableau.users.remove(old_user.id)
+                        except:
+                            pass
 
             logger.info("New users: {0}".format(new_users_set))
             if do_something:
