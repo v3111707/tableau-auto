@@ -83,7 +83,7 @@ class SendMail(object):
     def send_mail_old_serveradministrator(self, name):
         current_date = datetime.now()
         mail_text = f"The ad2tabsync script on {self.url} has found old server administrator and can not remove his. \n The old server administrator: {name}"
-        mail_subj = "The ad2tabsync script on {self.url} has found old server administrator"
+        mail_subj = f"The ad2tabsync script on {self.url} has found old server administrator"
         if self.sent_state.get(name):
             if (current_date - self.sent_state.get(name)).days > 3:
                 self.send_mail(subj=mail_subj, text=mail_text)
