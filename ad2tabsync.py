@@ -71,6 +71,7 @@ class SendMail(object):
         self.logger.debug(f"Set self.send_to to {self.send_to}")
         self.mail_from = SCRIPT_NAME + '@' + os.uname()[1]
         self.url = url
+        self.logger.debug(f"self.url: {self.url}")
         script_dir = os.path.dirname(os.path.abspath(__file__))
         self.sendmail_pickle = os.path.join(script_dir, 'SendMail.pickle')
         if os.path.isfile(self.sendmail_pickle):
