@@ -514,6 +514,7 @@ def main():
     if s.settings.get('zabbix'):
         _ = z.send(item_name, exit_code)
         main_logger.debug(f"Sent {exit_code} to zabbix")
+    main_logger.info(f"Exit with code:{exit_code}")
     sys.exit(exit_code)
 
 if __name__ == '__main__':
