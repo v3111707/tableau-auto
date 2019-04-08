@@ -108,6 +108,9 @@ class SendMail(object):
         msg.attach(MIMEText(body, 'plain'))
         server = SMTP()
         text = msg.as_string()
+
+        if isinstance(self.send_to, str):
+            self.send_to = [m.strip() for m in self.send_to.split(',')]
         if self.noop:
             try:
                 server.connect()
