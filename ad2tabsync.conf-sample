@@ -1,0 +1,22 @@
+[AD]
+server = 127.0.0.1
+user = user
+password = *******
+tableau_root_ou = OU=tableau,DC=corp,DC=firma,DC=local
+users_root_ou = DC=corp,DC=firma,DC=local
+
+[Tableau]
+server = https://tableau.firma.com
+password = *******
+username = user
+serviceAccounts = bot1,bot2,guest
+
+[Zabbix]
+zabbix_conf = /etc/zabbix/zabbix_agentd.conf
+item = ad2tab_sync
+
+[Mail]
+send_to = admin1@firma.com, admin2@firma.com
+
+
+
