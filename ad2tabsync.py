@@ -368,8 +368,7 @@ class AD2TabSync(object):
 
         # This ugly code, but I was forced to write this.
         if self.site_name == 'ERS':
-            self.logger.info(
-                f"Site ERS. Remove from tableau_groups {[t.name for t in tableau_groups if (t.name.startswith('F_') or t.name.startswith('A_'))]}")
+            self.logger.info("Site ERS. Remove from tableau_groups F_* and A_*")
             tableau_groups = [t for t in tableau_groups if not (t.name.startswith('F_') or t.name.startswith('A_'))]
         # End ugly code
 
