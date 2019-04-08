@@ -63,13 +63,14 @@ class Settings(object):
 
 
 class SendMail(object):
-    def __init__(self, send_to, log_level=logging.INFO, noop=False):
+    def __init__(self, send_to, log_level=logging.INFO, noop=False, url=''):
         self.logger = logging.getLogger(f'{SCRIPT_NAME}.SendMail')
         self.logger.setLevel(log_level)
         self.send_to = send_to
         self.noop = not noop
         self.logger.debug(f"Set self.send_to to {self.send_to}")
         self.mail_from = SCRIPT_NAME + '@' + os.uname()[1]
+        self.url = url
         script_dir = os.path.dirname(os.path.abspath(__file__))
         self.sendmail_pickle = os.path.join(script_dir, 'SendMail.pickle')
         if os.path.isfile(self.sendmail_pickle):
@@ -80,8 +81,8 @@ class SendMail(object):
 
     def send_mail_old_serveradministrator(self, name):
         current_date = datetime.now()
-        mail_text = f"The ad2tabsync script has found old server administrator and can not remove his. \n The old server administrator: {name}"
-        mail_subj = "The ad2tabsync script has found old server administrator"
+        mail_text = f"The ad2tabsync script on {self.url} has found old server administrator and can not remove his. \n The old server administrator: {name}"
+        mail_subj = "The ad2tabsync script on {self.url} has found old server administrator"
         if self.sent_state.get(name):
             if (current_date - self.sent_state.get(name)).days > 3:
                 self.send_mail(subj=mail_subj, text=mail_text)
@@ -235,7 +236,7 @@ class AD2TabSync(object):
         self.noop = not noop
         self.logger = logging.getLogger(f'{SCRIPT_NAME}.AD2TabSync')
         self.logger.setLevel(log_level)
-        self.mails = SendMail(send_to=self.settings.get('mail').get('send_to'), log_level=log_level)
+        self.mails = SendMail(send_to=self.settings.get('mail').get('send_to'), log_level=log_level, url=self.settings.get('tableau').get('server'))
         self.ad = AD(server=self.settings.get('ad').get('server'),
                 user=self.settings.get('ad').get('user'),
                 password=self.settings.get('ad').get('password'),
