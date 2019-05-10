@@ -507,6 +507,7 @@ def main():
         ad2tabsync = AD2TabSync(settings=s.settings, log_level=log_level, noop=argz.get('--noop'))
     except Exception as e:
         #mails.send_mail(text=e, subj='Error in AD2TabSync.__init__')
+        main_logger.exception("Error while AD2TabSync")
         exit_code = 1
         if s.settings.get('zabbix'):
             _ = z.send(item_name, exit_code)
