@@ -155,8 +155,7 @@ class AD:
                              search_scope=search_scope,
                              attributes=attributes)
         except Exception as e:
-            self.logger.debug("The query not properly ended")
-            self.logger.debug(e.message)
+            self.logger.exception("The query not properly ended")
             sys.exit()
         return self.conn.entries
 
@@ -331,7 +330,7 @@ class AD2TabSync(object):
             try:
                 tuser_obj = self.tab.users.get_by_id(user.id)
             except Exception as e:
-                self.logger.exception(f"Error while {s.content_url} sync")
+                self.logger.exception(f"Error while {e.content_url} sync")
             else:
                 auser_obj = self.ad.get_user_by_samaccountname(tuser_obj.name)
                 if auser_obj:
@@ -434,6 +433,7 @@ class AD2TabSync(object):
                 self._sync_site(site=s)
             except Exception as e:
                 self.logger.exception(f"Error while {s.content_url} sync")
+
                 return_code = 1
         return return_code
 
@@ -482,6 +482,7 @@ def main():
     try:
         s = Settings(file=CONFIG_PATH, log_level=log_level)
     except Exception as e:
+        main_logger.exception("Error while read conf file")
         sys.exit(1)
     if s.settings.get('zabbix'):
         z = Zabbix_send(s.settings.get('zabbix').get('zabbix_conf'))
