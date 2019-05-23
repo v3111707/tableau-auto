@@ -365,7 +365,7 @@ class AD2TabSync(object):
             if self.noop:
                 self.tab.groups.create(new_group)
         for group in old_groups:
-            group_id = [g.id for g in tableau_site_groups if g.name == group].pop()
+            group_id = [g.id for g in TSC.Pager(self.tab.groups) if g.name == group].pop()
             self.logger.info(f"Removing group {group}")
             if self.noop:
                 self.tab.groups.delete(group_id)

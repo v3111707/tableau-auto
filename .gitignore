@@ -1,7 +1,5 @@
-tableausync.d*
-tableausync.log*
-tableausync.conf
-.idea/
-venv/
-venv34/
-
+ad2tabsync.log*
+ad2tabsync.conf
+venv*/
+.idea
+.DS_Store
