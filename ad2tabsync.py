@@ -330,7 +330,7 @@ class AD2TabSync(object):
             try:
                 tuser_obj = self.tab.users.get_by_id(user.id)
             except Exception as e:
-                self.logger.exception(f"Error while {e.content_url} sync")
+                self.logger.warning(f"Error while self.tab.users.get_by_id{e}")
             else:
                 auser_obj = self.ad.get_user_by_samaccountname(tuser_obj.name)
                 if auser_obj:
