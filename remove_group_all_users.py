@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python36
 
 #WGSA-33344: Remove group "All users from project permission"
 
@@ -68,11 +68,11 @@ def main():
             root = etree.fromstring(resp.text)
             for grantee_capabilitie in root.findall(".//t:granteeCapabilities", namespaces=namespaces):
                 if grantee_capabilitie.findall('t:group',namespaces=namespaces) and grantee_capabilitie.findall('t:group',namespaces=namespaces).pop().attrib.get('id') == all_users_group_id:
-                    l.debug(f"Found All users in the \"{w.name}\" permissions")
+                    l.info(f"Found All users in the \"{w.name}\" permissions")
                     for capability in grantee_capabilitie.findall('.//t:capability', namespaces=namespaces):
                         url = f"{tab.workbooks.baseurl}/{w.id}/permissions/groups/{all_users_group_id}/{capability.attrib.get('name')}/{capability.attrib.get('mode')}"
                         if not argz.get('--noop'):
-                            l.debug(f"url: {url}")
+                            l.info(f"url: {url}")
                             tab.groups.delete_request(url)
                         else:
                             l.warning(f'NOOP: {url}')
