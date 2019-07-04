@@ -27,6 +27,7 @@ sites_for_processing = ['dev']
 ignore_tag = 'all_users_report'
 SCRIPT_HOME = os.path.dirname(os.path.realpath(__file__))
 conf_file = os.path.join(SCRIPT_HOME, 'ad2tabsync.conf')
+logs_file = os.path.join(SCRIPT_HOME, 'remove_group_all_users.log')
 
 def get_logger(name, filename=None):
     l = logging.getLogger(name)
@@ -41,7 +42,7 @@ def get_logger(name, filename=None):
     return l
 
 def main():
-    l = get_logger(name='remove_group_all_users', filename="remove_group_all_users.log")
+    l = get_logger(name='remove_group_all_users', filename=logs_file)
     if '-d' in sys.argv or '--dd' in sys.argv:
         print(f"argv: {sys.argv}")
         l.setLevel(logging.DEBUG)
