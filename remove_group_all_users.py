@@ -16,6 +16,7 @@ Options:
 
 import logging
 import sys
+import os
 import tableauserverclient as TSC
 import xml.etree.ElementTree as etree
 from configparser import ConfigParser
@@ -24,7 +25,8 @@ from logging.handlers import TimedRotatingFileHandler
 
 sites_for_processing = ['dev']
 ignore_tag = 'all_users_report'
-conf_file = 'ad2tabsync.conf'
+SCRIPT_HOME = os.path.dirname(os.path.realpath(__file__))
+conf_file = os.path.join(SCRIPT_HOME, 'ad2tabsync.conf')
 
 def get_logger(name, filename=None):
     l = logging.getLogger(name)
