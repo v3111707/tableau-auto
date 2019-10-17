@@ -514,11 +514,6 @@ def main():
 
     return_code = ad2tabsync.run_sync(argz.get('-s'))
     main_logger.debug(f"return_code: {return_code}")
-    if return_code:
-        #mails.send_mail(text='Error in AD2TabSync.run_sync', subj='Error in AD2TabSync.run_sync')
-        exit_code = 1
-        if s.settings.get('zabbix'):
-            _ = z.send(item_name, exit_code)
 
     if s.settings.get('zabbix'):
         _ = z.send(item_name, exit_code)

@@ -3,3 +3,4 @@ ad2tabsync.conf
 venv*/
 .idea
 .DS_Store
+remove_group_all_users.log*
