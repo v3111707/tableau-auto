@@ -1,4 +1,4 @@
-#!/usr/bin/env python36
+#!/usr/bin/env python3
 
 """
 ad_sync is a tool for synchronizing AD users and groups with Tableau Server
