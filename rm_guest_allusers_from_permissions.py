@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.7
+#!/usr/bin/env python3
 
 """
 rm_guest_allusers_from_permissions.py  --  Remove group All users and guest from permissions
