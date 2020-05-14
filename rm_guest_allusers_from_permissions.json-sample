@@ -1,0 +1,12 @@
+{
+  "All Users":{
+    "tag":"all_users_report",
+    "sites":["dev", ""],
+    "group": true
+  },
+  "guest":{
+    "tag":"guest_report",
+    "sites":["dev"],
+    "group": false
+  }
+}

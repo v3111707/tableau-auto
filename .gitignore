@@ -1,5 +1,6 @@
-ad2tabsync.log*
-ad2tabsync.conf
+*.log*
+*.conf
+*.json
 venv*/
 .idea
 .DS_Store
