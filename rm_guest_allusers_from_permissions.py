@@ -63,7 +63,7 @@ class TableauPermissionCleaner():
         for d in datasources:
             self.tsc_server.datasources.populate_permissions(d)
             for p in d.permissions:
-                if p.grantee.id == group_id and p.grantee.tag_name == 'user':
+                if p.grantee.id == group_id and p.grantee.tag_name == 'group':
                     self.lgr.info(f'Remove {str(p.capabilities)} permissions from datasource: "{d.name}" , project: "{w.project_name})"')
                     if not self.noop:
                         self.tsc_server.datasources.delete_permission(w, p)
