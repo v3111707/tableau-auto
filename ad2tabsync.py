@@ -514,7 +514,8 @@ def main():
 
     return_code = ad2tabsync.run_sync(argz.get('-s'))
     main_logger.debug(f"return_code: {return_code}")
-
+    if return_code != 0:
+        exit_code = return_code
     if s.settings.get('zabbix'):
         _ = z.send(item_name, exit_code)
         main_logger.debug(f"Sent {exit_code} to zabbix")
