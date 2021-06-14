@@ -298,7 +298,11 @@ class AD2TabSync(object):
                         self.logger.info(f"{user_obj.name} already has role Unlicensed. Skip")
                 else:
                     if self.noop:
-                        self.tab.users.remove(user_obj.id)
+                        try:
+                            self.tab.users.remove(user_obj.id)
+                        except TSC.server.endpoint.exceptions.ServerResponseError as ServerResponseError:
+                            if not ServerResponseError.code == 409003:
+                                raise ServerResponseError
                     self.logger.info(f"{user} has been removed")
 
         for user in new_users:

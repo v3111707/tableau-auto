@@ -1,0 +1,4 @@
+ldap3
+docopt
+tableauserverclient
+py-zabbix
