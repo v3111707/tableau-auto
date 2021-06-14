@@ -301,7 +301,7 @@ class AD2TabSync(object):
                         try:
                             self.tab.users.remove(user_obj.id)
                         except TSC.server.endpoint.exceptions.ServerResponseError as ServerResponseError:
-                            if not ServerResponseError.code == 409003:
+                            if not ServerResponseError.code == '409003':
                                 raise ServerResponseError
                     self.logger.info(f"{user} has been removed")
 
