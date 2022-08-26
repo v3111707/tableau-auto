@@ -393,6 +393,7 @@ class AD2TabSync(object):
         tableau_site_users = [u for u in TSC.Pager(self.tab.users)]
 
         for group in [g for g in tableau_groups if g.name != 'All Users']:
+            self.logger.debug(f'populate_users for {group.name}')
             self.tab.groups.populate_users(group, opts)
             tableau_members_set = set([user.name for user in group.users])
             ad_members = self.ad.get_members_by_groupname(group.name)
