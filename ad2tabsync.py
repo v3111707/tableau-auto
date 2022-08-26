@@ -449,7 +449,7 @@ class AD2TabSync(object):
         return return_code
 
     def _get_non_removable_group(self):
-        group_name_prefix = '__NonRmvblUsrs_'
+        group_name_prefix = '__NonRmvblUsrs'
         groups = [g for g in TSC.Pager(self.tab.groups) if g.name.startswith(group_name_prefix)]
         return groups
 
