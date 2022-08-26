@@ -252,7 +252,6 @@ class AD2TabSync(object):
         self.logger.debug(f"Signing in to {self.settings.get('tableau').get('server')}")
         self.tab.auth.sign_in(self.tableau_auth)
 
-
     def _sync_site_user(self):
         self.logger.debug('Revision users on site')
         tableau_all_site_users = [user for user in TSC.Pager(self.tab.users)]
@@ -265,11 +264,14 @@ class AD2TabSync(object):
         new_users = list(set([u.sAMAccountName.value for u in ad_all_site_users]) - set(
             [u.name for u in tableau_all_site_users]) - self.serviceaccounts)
 
-        # This ugly code, but I was forced to write this.
+        ######### WGSA-48601 ###############
+        non_removable_user = self._get_non_removable_user()
+        old_users = set(old_users) - set(i.name for i in non_removable_user)
+        ######### WGSA-48601 ###############
+
         if self.site_name == 'ERS':
             self.logger.info(f"Site ERS. Set old_users to None")
             old_users = []
-        # End ugly code
 
         if old_users:
             self.logger.info(f"Old users: {old_users}")
@@ -353,16 +355,21 @@ class AD2TabSync(object):
         new_groups = set(ad_site_groups) - set(tableau_site_groups)
         old_groups = set(tableau_site_groups) - set(ad_site_groups)
         old_groups.remove('All Users')
-        # This ugly code, but I was forced to write this.
+
         if self.site_name == 'ERS':
             self.logger.info(f"Site ERS. Remove from old_groups F_* and A_*")
             old_groups = [t for t in old_groups if not (t.startswith('F_') or t.startswith('A_'))]
-        # End ugly code
 
         if new_groups:
             self.logger.info("New groups {0}".format(new_groups))
         if old_groups:
             self.logger.info("Old groups {0}".format(old_groups))
+
+        ######### WGSA-48601 ###############
+        non_removable_group = self._get_non_removable_group()
+        old_users = set(old_groups) - set(i.name for i in non_removable_group)
+        ######### WGSA-48601 ###############
+
         for group in new_groups:
             new_group = TSC.GroupItem(group)
             self.logger.info(f"Creating group {group}")
@@ -379,11 +386,9 @@ class AD2TabSync(object):
         tableau_groups = [g for g in TSC.Pager(self.tab.groups)]
         opts = TSC.RequestOptions(pagesize=1000)
 
-        # This ugly code, but I was forced to write this.
         if self.site_name == 'ERS':
             self.logger.info("Site ERS. Remove from tableau_groups F_* and A_*")
             tableau_groups = [t for t in tableau_groups if not (t.name.startswith('F_') or t.name.startswith('A_'))]
-        # End ugly code
 
         tableau_site_users = [u for u in TSC.Pager(self.tab.users)]
 
@@ -417,6 +422,7 @@ class AD2TabSync(object):
         self.logger.info(f"Start sync site {self.site_name}, content_url: {site.content_url}")
         self.tableau_auth.site_id = site.content_url
         self.tab.auth.sign_in(self.tableau_auth)
+
         self._sync_site_user()
         self._sync_site_groups()
         self._sync_site_memberships()
@@ -441,6 +447,19 @@ class AD2TabSync(object):
                 return_code = 1
         return return_code
 
+    def _get_non_removable_group(self):
+        group_name_prefix = '__NonRmvblUsrs_'
+        groups = [g for g in TSC.Pager(self.tab.groups) if g.name.startswith(group_name_prefix)]
+        return groups
+
+    def _get_non_removable_user(self):
+        opts = TSC.RequestOptions(pagesize=1000)
+        groups = self._get_non_removable_group()
+        non_removable_users = []
+        for group in groups:
+            self.tab.groups.populate_users(group, opts)
+            non_removable_users.extend([user for user in group.users if user.name not in [i.name for i in non_removable_users]])
+        return non_removable_users
 
 class Zabbix_send(object):
     def __init__(self, config_file):
@@ -473,7 +492,7 @@ def main():
         main_logger = logging.getLogger(f'{SCRIPT_NAME}')
     main_logger.setLevel(log_level)
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    sh = logging.StreamHandler()
+    sh = logging.StreamHandler(sys.stdout)
     sh.setFormatter(formatter)
     main_logger.addHandler(sh)
     log_path = os.path.dirname(os.path.abspath(__file__))
