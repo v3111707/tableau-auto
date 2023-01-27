@@ -340,10 +340,14 @@ class AD2TabSync(object):
             else:
                 auser_obj = self.ad.get_user_by_samaccountname(tuser_obj.name)
                 if auser_obj:
-                    if tuser_obj.fullname != auser_obj[0].name.value:
+                    #WGSA-50133
+                    get_name = lambda n: re.sub(r'\(\w+\)$', '', n)
+                    get_tag = lambda n: re.findall(r'\(\w+\)$|$', n)[0]
+                    if auser_obj[0].name.value != tuser_obj.fullname and auser_obj[0].name.value != get_name(tuser_obj.fullname):
+                        new_name = auser_obj[0].name.value + get_tag(tuser_obj.fullname)
                         self.logger.info(
-                            f"Changing {tuser_obj.name}'s fullname: {tuser_obj.fullname} -> {auser_obj[0].name.value}")
-                        tuser_obj.fullname = auser_obj[0].name.value
+                            f"Changing {tuser_obj.name}'s fullname: {tuser_obj.fullname} -> {new_name}")
+                        tuser_obj.fullname = new_name
                         if self.noop:
                             self.tab.users.update(tuser_obj)
                             tuser_obj.email = auser_obj[0].mail.value
