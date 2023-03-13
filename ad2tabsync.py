@@ -159,7 +159,9 @@ class AD:
             sys.exit()
         return self.conn.entries
 
-    def _get_group_members(self, dn, group_list=[]):
+    def _get_group_members(self, dn, group_list=None):
+        if group_list is None:
+            group_list = []
         users = []
         result = self._search(dn, '(objectClass=*)')
         self.logger.debug("Get users form {0}".format(result[0].name.value))
