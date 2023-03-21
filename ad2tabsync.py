@@ -267,8 +267,8 @@ class AD2TabSync(object):
             [u.name for u in tableau_all_site_users]) - self.serviceaccounts)
 
         ######### WGSA-48601 ###############
-        non_removable_user = self._get_non_removable_user()
-        old_users = set(old_users) - set(i.name for i in non_removable_user)
+        # non_removable_user = self._get_non_removable_user()
+        # old_users = set(old_users) - set(i.name for i in non_removable_user)
         ######### WGSA-48601 ###############
 
         if self.site_name == 'ERS':
@@ -454,19 +454,19 @@ class AD2TabSync(object):
                 return_code = 1
         return return_code
 
-    def _get_non_removable_group(self):
-        group_name_prefix = '__NonRmvblUsrs'
-        groups = [g for g in TSC.Pager(self.tab.groups) if g.name.startswith(group_name_prefix)]
-        return groups
+    # def _get_non_removable_group(self):
+    #     group_name_prefix = '__NonRmvblUsrs'
+    #     groups = [g for g in TSC.Pager(self.tab.groups) if g.name.startswith(group_name_prefix)]
+    #     return groups
 
-    def _get_non_removable_user(self):
-        opts = TSC.RequestOptions(pagesize=1000)
-        groups = self._get_non_removable_group()
-        non_removable_users = []
-        for group in groups:
-            self.tab.groups.populate_users(group, opts)
-            non_removable_users.extend([user for user in group.users if user.name not in [i.name for i in non_removable_users]])
-        return non_removable_users
+    # def _get_non_removable_user(self):
+    #     opts = TSC.RequestOptions(pagesize=1000)
+    #     groups = self._get_non_removable_group()
+    #     non_removable_users = []
+    #     for group in groups:
+    #         self.tab.groups.populate_users(group, opts)
+    #         non_removable_users.extend([user for user in group.users if user.name not in [i.name for i in non_removable_users]])
+    #     return non_removable_users
 
 class Zabbix_send(object):
     def __init__(self, config_file):
