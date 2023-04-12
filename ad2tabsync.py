@@ -372,8 +372,8 @@ class AD2TabSync(object):
             self.logger.info("Old groups {0}".format(old_groups))
 
         ######### WGSA-48601 ###############
-        non_removable_group = self._get_non_removable_group()
-        old_groups = set(old_groups) - set(i.name for i in non_removable_group)
+        # non_removable_group = self._get_non_removable_group()
+        # old_groups = set(old_groups) - set(i.name for i in non_removable_group)
         ######### WGSA-48601 ###############
 
         for group in new_groups:
