@@ -1,6 +1,6 @@
 ldap3
 docopt
-tableauserverclient ~= 0.26
+tableauserverclient ~= 0.25
 py-zabbix
 typer ~= 0.7.0
 pyyaml ~= 6.0
