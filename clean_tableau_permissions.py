@@ -109,6 +109,25 @@ class TableauPermissionCleaner:
             self.log.debug('Start proccesing projects')
             for pr in TSC.Pager(endpoint=self.server.projects, request_opts=req_option):
                 self.log.debug(f'Proccesing project "{pr.name}"')
+
+                if pr.name in ['Tableau Quick Search Development', 'Aleksandr Nechipurenko']:
+                    print(pr.name)
+                    print(pr.name)
+
+                self.server.projects.populate_workbook_default_permissions(pr)
+                for p in pr.default_workbook_permissions:
+                    if p.grantee.tag_name == 'group' and p.grantee.id in clean_pr_groups:
+                        self.log.info(f'Remove wb_def_p {p.capabilities} from pr "{pr.name}" '
+                                      f'for \"{clean_pr_groups.get(p.grantee.id).get("name")}\"')
+                        if not self.noop:
+                            self.server.projects.delete_workbook_default_permissions(pr, p)
+
+                    if p.grantee.tag_name == 'user' and p.grantee.id in clean_pr_users:
+                        self.log.info(f'Remove wb_def_p {p.capabilities} from pr "{pr.name}" '
+                                      f'for  \"{clean_pr_users.get(p.grantee.id).get("name")}\"')
+                        if not self.noop:
+                            self.server.projects.delete_workbook_default_permissions(pr, p)
+
                 self.server.projects.populate_permissions(pr)
                 for p in pr.permissions:
                     if p.grantee.tag_name == 'group' and p.grantee.id in clean_pr_groups:
