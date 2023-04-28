@@ -106,6 +106,23 @@ class TableauPermissionCleaner:
                 if group_id:
                     clean_pr_groups[group_id] = {'name': group['name']}
 
+            self.log.debug('Start proccesing projects')
+            for pr in TSC.Pager(endpoint=self.server.projects, request_opts=req_option):
+                self.log.debug(f'Proccesing project "{pr.name}"')
+                self.server.projects.populate_permissions(pr)
+                for p in pr.permissions:
+                    if p.grantee.tag_name == 'group' and p.grantee.id in clean_pr_groups:
+                        self.log.info(f'Remove {p.capabilities} from pr "{pr.name}" '
+                                      f'for \"{clean_pr_groups.get(p.grantee.id).get("name")}\"')
+                        if not self.noop:
+                            self.server.projects.delete_permission(pr, p)
+
+                    if p.grantee.tag_name == 'user' and p.grantee.id in clean_pr_users:
+                        self.log.info(f'Remove {p.capabilities} from pr "{pr.name}" '
+                                      f'for  \"{clean_pr_users.get(p.grantee.id).get("name")}\"')
+                        if not self.noop:
+                            self.server.projects.delete_permission(pr, p)
+
             self.log.debug('Start proccesing workbooks')
             for wb in TSC.Pager(endpoint=self.server.workbooks, request_opts=req_option):
                 self.log.debug(f'Proccesing workbook "{wb.name}"')
@@ -125,24 +142,6 @@ class TableauPermissionCleaner:
                                           f'for \"{clean_wb_users.get(p.grantee.id).get("name")}\"')
                             if not self.noop:
                                 self.server.workbooks.delete_permission(wb, p)
-
-            self.log.debug('Start proccesing projects')
-            for pr in TSC.Pager(endpoint=self.server.projects, request_opts=req_option):
-                self.log.debug(f'Proccesing project "{pr.name}"')
-                self.server.projects.populate_permissions(pr)
-                for p in pr.permissions:
-                    if p.grantee.tag_name == 'group' and p.grantee.id in clean_pr_groups:
-                        self.log.info(f'Remove {p.capabilities} from pr "{pr.name}" '
-                                      f'for \"{clean_pr_groups.get(p.grantee.id).get("name")}\"')
-                        if not self.noop:
-                            self.server.projects.delete_permission(pr, p)
-
-                    if p.grantee.tag_name == 'user' and p.grantee.id in clean_pr_users:
-                        self.log.info(f'Remove {p.capabilities} from pr "{pr.name}" '
-                                      f'for  \"{clean_pr_users.get(p.grantee.id).get("name")}\"')
-                        if not self.noop:
-                            self.server.projects.delete_permission(pr, p)
-
 
 
 app = typer.Typer(add_completion=False)
