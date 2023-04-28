@@ -95,50 +95,75 @@ class TableauPermissionCleaner:
                 if group_id:
                     clean_wb_groups[group_id] = {'tag': group.get('tag'),
                                                  'name': group['name']}
-            clean_pr_users = {}
-            clean_pr_groups = {}
+            pr_items_clean = {'user': {},
+                              'group': {}}
+
             for user in [i['projects']['users'] for i in conf['sites']][0]:
                 user_id = self._get_user_id(username=user['name'])
                 if user_id:
-                    clean_pr_users[user_id] = {'name': user['name']}
+                    pr_items_clean['user'][user_id] = {'name': user['name']}
             for group in [i['projects']['groups'] for i in conf['sites']][0]:
                 group_id = self._get_group_id(groupname=group['name'])
                 if group_id:
-                    clean_pr_groups[group_id] = {'name': group['name']}
+                    pr_items_clean['group'][group_id] = {'name': group['name']}
 
             self.log.debug('Start proccesing projects')
             for pr in TSC.Pager(endpoint=self.server.projects, request_opts=req_option):
                 self.log.debug(f'Proccesing project "{pr.name}"')
 
-                if pr.name in ['Tableau Quick Search Development', 'Aleksandr Nechipurenko']:
-                    print(pr.name)
-                    print(pr.name)
+                self.server.projects.populate_datarole_default_permissions(pr)
+                for p in pr.default_datarole_permissions:
+                    if p.grantee.id in pr_items_clean.get(p.grantee.tag_name):
+                        self.log.info(f'Remove default_datarole_permissions {p.capabilities} from project "{pr.name}" '
+                                      f'for \"{pr_items_clean.get(p.grantee.tag_name).get(p.grantee.id).get("name")}\"')
+                        if not self.noop:
+                            self.server.projects.delete_datarole_default_permissions(pr, p)
+
+                self.server.projects.populate_datasource_default_permissions(pr)
+                for p in pr.default_datasource_permissions:
+                    if p.grantee.id in pr_items_clean.get(p.grantee.tag_name):
+                        self.log.info(f'Remove default_datasource_permissions {p.capabilities} from project "{pr.name}" '
+                                      f'for \"{pr_items_clean.get(p.grantee.tag_name).get(p.grantee.id).get("name")}\"')
+                        if not self.noop:
+                            self.server.projects.delete_datasource_default_permissions(pr, p)
+
+                self.server.projects.populate_flow_default_permissions(pr)
+                for p in pr.default_flow_permissions:
+                    if p.grantee.id in pr_items_clean.get(p.grantee.tag_name):
+                        self.log.info(f'Remove default_flow_permissions {p.capabilities} from project "{pr.name}" '
+                                      f'for \"{pr_items_clean.get(p.grantee.tag_name).get(p.grantee.id).get("name")}\"')
+                        if not self.noop:
+                            self.server.projects.delete_flow_default_permissions(pr, p)
+
+                self.server.projects.populate_lens_default_permissions(pr)
+                for p in pr.default_lens_permissions:
+                    if p.grantee.id in pr_items_clean.get(p.grantee.tag_name):
+                        self.log.info(f'Remove default_lens_permissions {p.capabilities} from project "{pr.name}" '
+                                      f'for \"{pr_items_clean.get(p.grantee.tag_name).get(p.grantee.id).get("name")}\"')
+                        if not self.noop:
+                            self.server.projects.delete_lens_default_permissions(pr, p)
+
+                self.server.projects.populate_metric_default_permissions(pr)
+                for p in pr.default_metric_permissions:
+                    if p.grantee.id in pr_items_clean.get(p.grantee.tag_name):
+                        self.log.info(f'Remove default_metric_permissions {p.capabilities} from project "{pr.name}" '
+                                      f'for \"{pr_items_clean.get(p.grantee.tag_name).get(p.grantee.id).get("name")}\"')
+                        if not self.noop:
+                            self.server.projects.delete_metric_default_permissions(pr, p)
 
                 self.server.projects.populate_workbook_default_permissions(pr)
                 for p in pr.default_workbook_permissions:
-                    if p.grantee.tag_name == 'group' and p.grantee.id in clean_pr_groups:
-                        self.log.info(f'Remove wb_def_p {p.capabilities} from pr "{pr.name}" '
-                                      f'for \"{clean_pr_groups.get(p.grantee.id).get("name")}\"')
-                        if not self.noop:
-                            self.server.projects.delete_workbook_default_permissions(pr, p)
-
-                    if p.grantee.tag_name == 'user' and p.grantee.id in clean_pr_users:
-                        self.log.info(f'Remove wb_def_p {p.capabilities} from pr "{pr.name}" '
-                                      f'for  \"{clean_pr_users.get(p.grantee.id).get("name")}\"')
+                    if p.grantee.id in pr_items_clean.get(p.grantee.tag_name):
+                        self.log.info(f'Remove default_workbook_permissions {p.capabilities} from project "{pr.name}" '
+                                      f'for \"{pr_items_clean.get(p.grantee.tag_name).get(p.grantee.id).get("name")}\"')
                         if not self.noop:
                             self.server.projects.delete_workbook_default_permissions(pr, p)
 
                 self.server.projects.populate_permissions(pr)
                 for p in pr.permissions:
-                    if p.grantee.tag_name == 'group' and p.grantee.id in clean_pr_groups:
-                        self.log.info(f'Remove {p.capabilities} from pr "{pr.name}" '
-                                      f'for \"{clean_pr_groups.get(p.grantee.id).get("name")}\"')
-                        if not self.noop:
-                            self.server.projects.delete_permission(pr, p)
-
-                    if p.grantee.tag_name == 'user' and p.grantee.id in clean_pr_users:
-                        self.log.info(f'Remove {p.capabilities} from pr "{pr.name}" '
-                                      f'for  \"{clean_pr_users.get(p.grantee.id).get("name")}\"')
+                    if p.grantee.id in pr_items_clean.get(p.grantee.tag_name):
+                        self.log.info(f'Remove permissions {p.capabilities} from project "{pr.name}" '
+                                      f'for \"{pr_items_clean.get(p.grantee.tag_name).get(p.grantee.id).get("name")}\"')
                         if not self.noop:
                             self.server.projects.delete_permission(pr, p)
 
