@@ -22,7 +22,7 @@ from docopt import docopt
 from logging.handlers import TimedRotatingFileHandler
 
 SCRIPT_HOME = os.path.dirname(os.path.realpath(__file__))
-cred_file = os.path.join(SCRIPT_HOME, 'ad2tabsync.conf')
+cred_file = os.path.join(SCRIPT_HOME, '../ad2tabsync.conf')
 conf_file = os.path.join(SCRIPT_HOME, 'rm_guest_allusers_from_permissions.json')
 logs_file = os.path.join(SCRIPT_HOME, 'rm_guest_allusers_from_permissions.log')
 
@@ -47,9 +47,10 @@ class TableauPermissionCleaner():
 
     def _clear_site_from_group(self, ignore_tag, group_id):
         self.lgr.debug(f'Run _clear_site_from_group with ignore_tag:{ignore_tag}, group_id:{group_id}')
-
-        # workbooks = [w for w in list(TSC.Pager(self.tsc_server.workbooks)) if ignore_tag not in w.tags]
-        for wb in TSC.Pager(self.tsc_server.workbooks):
+        req_option = TSC.RequestOptions()
+        req_option.sort.add(TSC.Sort(TSC.RequestOptions.Field.CreatedAt,
+                                     TSC.RequestOptions.Direction.Desc))
+        for wb in TSC.Pager(endpoint=self.tsc_server.workbooks, request_opts=req_option):
             self.lgr.debug(f'Proccesing "{wb.name}"')
             if ignore_tag in wb.tags:
                 continue
@@ -67,12 +68,16 @@ class TableauPermissionCleaner():
             for p in d.permissions:
                 if p.grantee.id == group_id and p.grantee.tag_name == 'group':
                     self.lgr.info(
-                        f'Remove {str(p.capabilities)} permissions from datasource: "{d.name}" , project: "{w.project_name})"')
+                        f'Remove {str(p.capabilities)} permissions from datasource: "{d.name}" , project: "{wb.project_name})"')
                     if not self.noop:
                         self.tsc_server.datasources.delete_permission(w, p)
 
     def _clear_site_from_user(self, ignore_tag, user_id):
         self.lgr.debug(f'Run _clear_site_from_user with ignore_tag:{ignore_tag}, group_id:{user_id}')
+        req_option = TSC.RequestOptions()
+        req_option.sort.add(TSC.Sort(TSC.RequestOptions.Field.CreatedAt,
+                                     TSC.RequestOptions.Direction.Desc))
+        for wb in TSC.Pager(endpoint=self.tsc_server.workbooks, request_opts=req_option):
 
         workbooks = [w for w in list(TSC.Pager(self.tsc_server.workbooks)) if ignore_tag not in w.tags]
         for w in workbooks:

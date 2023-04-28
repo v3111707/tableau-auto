@@ -1,0 +1,14 @@
+gitsites:
+  - name: Default
+    workbooks:
+      users:
+        - name: guest
+          tag: guest_report
+      groups:
+        - name: All Users
+          tag: all_users_report
+    projects:
+      groups:
+        - name: All Users
+      users:
+        - name: guest

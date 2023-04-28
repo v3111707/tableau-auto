@@ -5,7 +5,7 @@ ad_sync is a tool for synchronizing AD users and groups with Tableau Server
 
 Usage:
   ad2tabsync.py [-d] [--dd] [--noop] [-s SITE]
-  ad2tabsync.py zabtest [-d] [--dd]
+  ad2tabsync.py zabtest [-d] [--dd] Send 1 to zabbix
   ad2tabsync.py oldsatest [-d] [--dd] [--noop]
 
 
