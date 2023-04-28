@@ -95,6 +95,9 @@ class TableauPermissionCleaner:
                 if group_id:
                     clean_wb_groups[group_id] = {'tag': group.get('tag'),
                                                  'name': group['name']}
+
+
+
             pr_items_clean = {'user': {},
                               'group': {}}
 
@@ -108,7 +111,15 @@ class TableauPermissionCleaner:
                     pr_items_clean['group'][group_id] = {'name': group['name']}
 
             self.log.debug('Start proccesing projects')
-            for pr in TSC.Pager(endpoint=self.server.projects, request_opts=req_option):
+            tableau_projects = list(TSC.Pager(endpoint=self.server.projects))
+            tableau_projects_by_parent = [i for i in tableau_projects if i.parent_id is None]
+            tableau_projects = [i for i in tableau_projects if i.parent_id is not None]
+            while tableau_projects:
+                for index, p in enumerate(tableau_projects):
+                    if p.parent_id in [i.id for i in tableau_projects_by_parent]:
+                        tableau_projects_by_parent.append(tableau_projects.pop(index))
+
+            for pr in tableau_projects_by_parent:
                 self.log.debug(f'Proccesing project "{pr.name}"')
 
                 self.server.projects.populate_datarole_default_permissions(pr)
