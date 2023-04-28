@@ -83,21 +83,7 @@ class TableauPermissionCleaner:
             self.log.info(f'Start processing site: "{site.name}".')
             self.server.auth.switch_site(site)
 
-            clean_wb_users = {}
-            clean_wb_groups = {}
-            for user in [i['workbooks']['users'] for i in conf['sites']][0]:
-                user_id = self._get_user_id(username=user['name'])
-                if user_id:
-                    clean_wb_users[user_id] = {'tag': user.get('tag'),
-                                               'name': user['name']}
-            for group in [i['workbooks']['groups'] for i in conf['sites']][0]:
-                group_id = self._get_group_id(groupname=group['name'])
-                if group_id:
-                    clean_wb_groups[group_id] = {'tag': group.get('tag'),
-                                                 'name': group['name']}
-
-
-
+            self.log.info('Start proccesing projects')
             pr_items_clean = {'user': {},
                               'group': {}}
 
@@ -110,7 +96,6 @@ class TableauPermissionCleaner:
                 if group_id:
                     pr_items_clean['group'][group_id] = {'name': group['name']}
 
-            self.log.debug('Start proccesing projects')
             tableau_projects = list(TSC.Pager(endpoint=self.server.projects))
             tableau_projects_by_parent = [i for i in tableau_projects if i.parent_id is None]
             tableau_projects = [i for i in tableau_projects if i.parent_id is not None]
@@ -178,7 +163,20 @@ class TableauPermissionCleaner:
                         if not self.noop:
                             self.server.projects.delete_permission(pr, p)
 
-            self.log.debug('Start proccesing workbooks')
+            self.log.info('Start proccesing workbooks')
+            clean_wb_users = {}
+            clean_wb_groups = {}
+            for user in [i['workbooks']['users'] for i in conf['sites']][0]:
+                user_id = self._get_user_id(username=user['name'])
+                if user_id:
+                    clean_wb_users[user_id] = {'tag': user.get('tag'),
+                                               'name': user['name']}
+            for group in [i['workbooks']['groups'] for i in conf['sites']][0]:
+                group_id = self._get_group_id(groupname=group['name'])
+                if group_id:
+                    clean_wb_groups[group_id] = {'tag': group.get('tag'),
+                                                 'name': group['name']}
+
             for wb in TSC.Pager(endpoint=self.server.workbooks, request_opts=req_option):
                 self.log.debug(f'Proccesing workbook "{wb.name}"')
                 self.server.workbooks.populate_permissions(wb)
