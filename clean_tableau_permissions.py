@@ -228,7 +228,10 @@ app = typer.Typer(add_completion=False)
 @app.command(context_settings=dict(help_option_names=["-h", "--help"]))
 def main(debug: Optional[bool] = typer.Option(False, '-d', '--debug', show_default=True),
          noop: Optional[bool] = typer.Option(False, '--noop', show_default=True),
-         zab_test: Optional[bool] = typer.Option(False, '--zt', show_default=True)):
+         zab_test: Optional[bool] = typer.Option(False, '--zt', show_default=True,
+                                                 help='Send to zabbox "1"'),
+         no_zabbix: Optional[bool] = typer.Option(False, '--nz', show_default=True,
+                                                  help='Don\'t use zabbix')):
     init_logger(debug=debug, file=LOG_FILE)
     log = logging.getLogger('main')
     log.debug('Debug mode')
@@ -239,18 +242,28 @@ def main(debug: Optional[bool] = typer.Option(False, '-d', '--debug', show_defau
     tab_creds = cred['Tableau']
     conf = get_conf(file=CONF_FILE)
 
-    # zs = Zabbix_sender(item_key=SCRIPT_NAME)
-    #
-    # if zab_test:
-    #     zs.send(1)
-    #     sys.exit(0)
+    if zab_test:
+        zs = Zabbix_sender(item_key=SCRIPT_NAME)
+        zs.send(1)
+        sys.exit(0)
+
+    if not no_zabbix:
+        zs = Zabbix_sender(item_key=SCRIPT_NAME)
 
     tpc = TableauPermissionCleaner(server=tab_creds['server'],
                                    username=tab_creds['username'],
                                    password=tab_creds['password'],
                                    noop=noop)
 
-    tpc.start(conf)
+    try:
+        tpc.start(conf)
+    except Exception as exp:
+        log.exception(exp)
+        if not no_zabbix:
+            zs.send(1)
+    else:
+        if not no_zabbix:
+            zs.send(0)
 
 
 if __name__ == "__main__":
