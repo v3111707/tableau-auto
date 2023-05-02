@@ -260,9 +260,11 @@ def main(debug: Optional[bool] = typer.Option(False, '-d', '--debug', show_defau
     except Exception as exp:
         log.exception(exp)
         if not no_zabbix:
+            log.info('Send to zabbix "1"')
             zs.send(1)
     else:
         if not no_zabbix:
+            log.info('Send to zabbix "0"')
             zs.send(0)
 
 
