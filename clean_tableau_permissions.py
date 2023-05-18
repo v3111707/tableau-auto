@@ -12,7 +12,6 @@ from typing import Optional
 from logging.handlers import TimedRotatingFileHandler
 from pyzabbix import ZabbixMetric, ZabbixSender
 
-sys.exit(0)
 
 SCRIPT_NAME = os.path.basename(__file__)
 SCRIPT_HOME = os.path.dirname(os.path.realpath(__file__))
@@ -217,14 +216,14 @@ class TableauPermissionCleaner:
                             self.server.views.populate_permissions(view)
                             for p in view.permissions:
                                 if p.grantee.tag_name == 'group' and p.grantee.id in clean_wb_groups:
-                                    if clean_wb_groups.get(p.grantee.id).get('tag') not in view.tags:
+                                    if clean_wb_groups.get(p.grantee.id).get('tag') not in view.tags | wb.tags:
                                         self.log.info(f'Remove  {p.capabilities} for \"{clean_wb_groups.get(p.grantee.id).get("name")}\" '
                                                       f'from view "{view.name}"(wb: "{wb.name}") ')
                                         if not self.noop:
                                             self.server.views.delete_permission(view, p)
 
                                 if p.grantee.tag_name == 'user' and p.grantee.id in clean_wb_users:
-                                    if clean_wb_users.get(p.grantee.id).get('tag') not in view.tags:
+                                    if clean_wb_users.get(p.grantee.id).get('tag') not in view.tags | wb.tags:
                                         self.log.info(f'Remove {p.capabilities} for \"{clean_wb_users.get(p.grantee.id).get("name")}\" '
                                                       f'from view "{view.name}"(wb: "{wb.name}")')
                                         if not self.noop:
