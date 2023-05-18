@@ -12,6 +12,8 @@ from typing import Optional
 from logging.handlers import TimedRotatingFileHandler
 from pyzabbix import ZabbixMetric, ZabbixSender
 
+sys.exit(0)
+
 SCRIPT_NAME = os.path.basename(__file__)
 SCRIPT_HOME = os.path.dirname(os.path.realpath(__file__))
 CRED_FILE = os.path.join(SCRIPT_HOME, 'ad2tabsync.conf')
