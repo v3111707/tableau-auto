@@ -188,7 +188,6 @@ class TableauPermissionCleaner:
                                 self.server.projects.delete_permission(pr, p)
 
             if current_site_conf.get('workbooks'):
-                self.log.info('Start proccesing workbooks')
                 clean_wb_users = {}
                 clean_wb_groups = {}
                 for user in current_site_conf['workbooks'].get('users', []):
@@ -205,9 +204,30 @@ class TableauPermissionCleaner:
                                                      'name': group['name']}
                 self.log.debug(f'clean_wb_groups: {clean_wb_groups}')
 
+                self.log.info('Start proccesing workbooks')
                 for wb in TSC.Pager(endpoint=self.server.workbooks, request_opts=req_option):
-                    self.log.debug(f'Proccesing workbook "{wb.name}"')
+                    self.log.debug(f'Proccesing workbook "{wb.name}" show_tabs: {wb.show_tabs}')
                     self.server.workbooks.populate_permissions(wb)
+                    if not wb.show_tabs:
+                        self.server.workbooks.populate_views(wb)
+                        for view in wb.views:
+                            self.log.debug(f'Proccesing view "{view.name}"')
+                            self.server.views.populate_permissions(view)
+                            for p in view.permissions:
+                                if p.grantee.tag_name == 'group' and p.grantee.id in clean_wb_groups:
+                                    if clean_wb_groups.get(p.grantee.id).get('tag') not in view.tags:
+                                        self.log.info(f'Remove  {p.capabilities} for \"{clean_wb_groups.get(p.grantee.id).get("name")}\" '
+                                                      f'from view "{view.name}"(wb: "{wb.name}") ')
+                                        if not self.noop:
+                                            self.server.views.delete_permission(view, p)
+
+                                if p.grantee.tag_name == 'user' and p.grantee.id in clean_wb_users:
+                                    if clean_wb_users.get(p.grantee.id).get('tag') not in view.tags:
+                                        self.log.info(f'Remove {p.capabilities} for \"{clean_wb_users.get(p.grantee.id).get("name")}\" '
+                                                      f'from view "{view.name}"(wb: "{wb.name}")')
+                                        if not self.noop:
+                                            self.server.views.delete_permission(view, p)
+
                     for p in wb.permissions:
                         if p.grantee.tag_name == 'group' and p.grantee.id in clean_wb_groups:
                             if clean_wb_groups.get(p.grantee.id).get('tag') not in wb.tags:
