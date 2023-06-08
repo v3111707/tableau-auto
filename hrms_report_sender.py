@@ -255,7 +255,7 @@ class SuccessFactorsClient:
 
 app = typer.Typer(add_completion=False)
 @app.command(context_settings=dict(help_option_names=["-h", "--help"]))
-def cli(debug: Optional[bool] = typer.Option(True, '-d', '--debug', show_default=True),
+def cli(debug: Optional[bool] = typer.Option(False, '-d', '--debug', show_default=True),
         mail_to: Optional[str] = typer.Option(None, '-m', '--mail_to', show_default=False),
         print_data: Optional[bool] = typer.Option(False, '-p', show_default=True,
                                                   help='Print data from HRMS and exit'),
@@ -399,7 +399,7 @@ def cli(debug: Optional[bool] = typer.Option(True, '-d', '--debug', show_default
                                                        subject=subject,
                                                        template_name=script_conf['mail_template'],
                                                        data=user_data)
-                log.info(f'send_templated_mail resp: {resp}')
+                log.debug(f'send_templated_mail resp: {resp}')
                 mail_states.set_first_mail_state(username)
 
     try:
