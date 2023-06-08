@@ -61,11 +61,14 @@ class ZabSender(object):
 class MailStatus:
     _first_mail = 'first_mail'
     _second_mail = 'second_mail'
+    _logger_name = 'main.MailStatus'
 
     def __init__(self, path: str):
+        self.logger = logging.getLogger(self._logger_name)
         self._path = path
         self._data = {}
         if os.path.isfile(path):
+            self.logger.info(f'Loading {path}')
             with open(self._path, "r") as f:
                 self._data = json.load(f)
 
@@ -73,23 +76,31 @@ class MailStatus:
         with open(self._path, "w") as f:
             json.dump(self._data, f)
 
-    def get_first_mail_state(self, username):
+    def get_first_mail_state(self, username: str):
         if self._data.get(username) and self._data.get(username).get(self._first_mail):
             return True
         return False
 
-    def get_second_mail_state(self, username):
+    def get_second_mail_state(self, username: str):
         if self._data.get(username) and self._data.get(username).get(self._second_mail):
             return True
         return False
 
-    def set_first_mail_state(self, username):
-        self._data[username] = self._data.get(username, {}) | {self._first_mail: True}
+    def set_first_mail_state(self, username: str):
+        self.logger.info(f'Set first mail to True for {username}')
+        self._data[username] = {**self._data.get(username, {}), **{self._first_mail: True}}
         self._save_data()
 
-    def set_second_mail_state(self, username):
-        self._data[username] = self._data.get(username, {}) |{self._second_mail: True}
+    def set_second_mail_state(self, username: str):
+        self.logger.info(f'Set second mail to True for {username}')
+        self._data[username] = {**self._data.get(username, {}), **{self._second_mail: True}}
         self._save_data()
+
+    def clean(self, username: str):
+        if username in self._data:
+            self.logger.info(f'Clean mail status for {username}')
+            self._data.pop(username)
+            self._save_data()
 
 
 class EmailSender:
@@ -195,11 +206,13 @@ class SuccessFactorsClient:
         url = urljoin(self.base_url, resource_path)
         token_type = self.token['token_type']
         access_token = self.token['access_token']
+        # from_date = str(datetime.datetime.now().date())
+        from_date = str(datetime.datetime.now() + datetime.timedelta(days=-1))
 
         params = {'format': 'json',
                   '$select': 'userId,managerId,customDate4',
                   'toDate': str(up_to.date()),
-                  '$filter': f"customDate4 ge '{str(datetime.datetime.now().date())}' "
+                  '$filter': f"customDate4 ge '{from_date}' "
                              f"and userNav/status in 't','f','T','F','e','d'"}
 
         headers = {'Authorization': f'{token_type} {access_token}',
@@ -243,22 +256,20 @@ def cli(debug: Optional[bool] = typer.Option(True, '-d', '--debug', show_default
     log = logging.getLogger('main')
 
     exit_code = 0
-    mail_states = MailStatus('email_states.json')
 
     hrms_conf = dotenv_values('.env.hrms')
     tab_conf = dotenv_values('.env.tableau')
     mail_conf = dotenv_values('.env.email')
     script_conf = dotenv_values('.env.hrms_report_sender')
 
+    mail_states = MailStatus('email_states.json')
+
     tableau_url = tab_conf['url']
 
-
     if zab_test:
-
         zs = ZabSender(item_key=SCRIPT_NAME)
         zs.send(1)
         sys.exit(0)
-
 
     if load_file:
         # log.info(f'Opening "{os.path.abspath(load_file)}"')
@@ -361,16 +372,28 @@ def cli(debug: Optional[bool] = typer.Option(True, '-d', '--debug', show_default
     with EmailSender(**mail_conf) as mail_sender:
         for user_data in report_data:
             days_left = (user_data['termination_date'] - datetime.datetime.now()).days
+            username = user_data['username']
             print(days_left)
-            if days_left <= 1:
-                print(user_data['displayName'])
-                print('days_left < 1')
-            elif days_left < 7:
-                print(user_data['displayName'])
-                print('days_left < 7')
-            elif 7 < days_left:
-                print(user_data['displayName'])
-                print(' 7 < days_left')
+            if days_left <= 1 and mail_states.get_second_mail_state(username):
+                mail_states.clean(username)
+            elif days_left > 7 and not mail_states.get_first_mail_state(username):
+                log.info(f'Send first mail to {username}')
+                mail_states.set_first_mail_state(username)
+            elif days_left < 7 and not mail_states.get_second_mail_state(username):
+                log.info(f'Send second mail to {username}')
+                mail_states.set_second_mail_state(username)
+
+
+
+
+    try:
+        zs = ZabSender(item_key=SCRIPT_NAME)
+        log.info(f'Send to zabbix "{exit_code}"')
+        zs.send(exit_code)
+    except Exception as e:
+        log.warning(f'Exception while send to Zabbix:{e}')
+
+
 
 
 
