@@ -207,7 +207,7 @@ class SuccessFactorsClient:
         token_type = self.token['token_type']
         access_token = self.token['access_token']
         # from_date = str(datetime.datetime.now().date())
-        from_date = str(datetime.datetime.now() + datetime.timedelta(days=-1))
+        from_date = str(datetime.datetime.now() + datetime.timedelta(days=-7))
 
         params = {'format': 'json',
                   '$select': 'userId,managerId,customDate4',
