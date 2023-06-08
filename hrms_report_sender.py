@@ -22,7 +22,7 @@ from jinja2 import Environment, FileSystemLoader
 SCRIPT_NAME = os.path.basename(__file__)
 
 
-def init_logger(debug: bool = False, log_names: list = None):
+def init_logger(debug: bool = False, log_names: list = None, path: str = None):
     if log_names is None:
         log_names = ['main']
     for log_name in log_names:
@@ -35,6 +35,11 @@ def init_logger(debug: bool = False, log_names: list = None):
             logger.debug('Set level DEBUG')
         else:
             logger.setLevel(logging.INFO)
+        if path:
+            handler = logging.handlers.RotatingFileHandler(path,
+                                                           maxBytes=4096,
+                                                           backupCount=3)
+            logger.addHandler(handler)
 
 
 def convert_date(date: str):
