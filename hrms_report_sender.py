@@ -254,7 +254,8 @@ def cli(debug: Optional[bool] = typer.Option(True, '-d', '--debug', show_default
             log.info(
                 f'User:{username},  termination date:{termination_date.date()}, manager\'s email: {manager_data["email"]}')
     if print_data:
-        print(report_data)
+        json.
+        print(json.dumps(report_data, indent = 4) )
         return
 
 
