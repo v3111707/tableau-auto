@@ -273,7 +273,7 @@ def cli(debug: Optional[bool] = typer.Option(False, '-d', '--debug', show_defaul
     mail_creds = dotenv_values('.env.email.creds')
     script_conf = dotenv_values('.env.hrms_report_sender')
 
-    mail_states = MailStatus('email_states.json')
+    mail_states = MailStatus('hrms_report_sender_email_states.json')
 
     tableau_url = tableau_creds['url']
 
