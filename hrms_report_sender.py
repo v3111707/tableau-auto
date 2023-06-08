@@ -362,16 +362,16 @@ def cli(debug: Optional[bool] = typer.Option(True, '-d', '--debug', show_default
         for user_data in report_data:
             days_left = (user_data['termination_date'] - datetime.datetime.now()).days
             print(days_left)
-            match days_left:
-                case _ if days_left <= 1:
-                    print(user_data['displayName'])
-                    print('days_left < 1')
-                case _ if 7 < days_left:
-                    print(user_data['displayName'])
-                    print(' 7 < days_left')
-                case _ if days_left < 7:
-                    print(user_data['displayName'])
-                    print('days_left < 7')
+            if days_left <= 1:
+                print(user_data['displayName'])
+                print('days_left < 1')
+            elif days_left < 7:
+                print(user_data['displayName'])
+                print('days_left < 7')
+            elif 7 < days_left:
+                print(user_data['displayName'])
+                print(' 7 < days_left')
+
 
 
 
