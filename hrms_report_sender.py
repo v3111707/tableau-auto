@@ -39,7 +39,7 @@ def init_logger(debug: bool = False, log_names: list = None, path: str = None):
         logger.addHandler(sh)
         if path:
             fh = RotatingFileHandler(path,
-                                     maxBytes=4096,
+                                     maxBytes=4194304,
                                      backupCount=3)
             # fh.setLevel(logging.DEBUG)
             logger.addHandler(fh)
