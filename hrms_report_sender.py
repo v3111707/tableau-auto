@@ -384,6 +384,7 @@ def cli(debug: Optional[bool] = typer.Option(False, '-d', '--debug', show_defaul
             subject = f"Moving {tableau_url.replace('https://', '')} reports of the user leaving the company"
 
             if days_left < -5:
+                log.info('days_left less then 5')
                 mail_states.clean(username)
             elif not user_data.get('tableau_resources'):
                 log.info('tableau_resources is None. Ignore')
