@@ -61,6 +61,7 @@ class ZabSender(object):
 class MailStatus:
     _first_mail = 'first_mail'
     _second_mail = 'second_mail'
+    _third_mail = 'third_mail'
     _logger_name = 'main.MailStatus'
 
     def __init__(self, path: str):
@@ -86,6 +87,11 @@ class MailStatus:
             return True
         return False
 
+    def get_third_mail_state(self, username: str):
+        if self._data.get(username) and self._data.get(username).get(self._third_mail):
+            return True
+        return False
+
     def set_first_mail_state(self, username: str):
         self.logger.info(f'Set first mail to True for {username}')
         self._data[username] = {**self._data.get(username, {}), **{self._first_mail: True}}
@@ -94,6 +100,11 @@ class MailStatus:
     def set_second_mail_state(self, username: str):
         self.logger.info(f'Set second mail to True for {username}')
         self._data[username] = {**self._data.get(username, {}), **{self._second_mail: True}}
+        self._save_data()
+
+    def set_third_mail_state(self, username: str):
+        self.logger.info(f'Set third mail to True for {username}')
+        self._data[username] = {**self._data.get(username, {}), **{self._third_mail: True}}
         self._save_data()
 
     def clean(self, username: str):
@@ -245,7 +256,7 @@ class SuccessFactorsClient:
 app = typer.Typer(add_completion=False)
 @app.command(context_settings=dict(help_option_names=["-h", "--help"]))
 def cli(debug: Optional[bool] = typer.Option(True, '-d', '--debug', show_default=True),
-        mail_to: Optional[str] = typer.Option(False, '-m', '--mail_to', show_default=False),
+        mail_to: Optional[str] = typer.Option(None, '-m', '--mail_to', show_default=False),
         print_data: Optional[bool] = typer.Option(False, '-p', show_default=True,
                                                   help='Print data from HRMS and exit'),
         zab_test: Optional[bool] = typer.Option(False, '--zt', show_default=True,
@@ -257,14 +268,14 @@ def cli(debug: Optional[bool] = typer.Option(True, '-d', '--debug', show_default
 
     exit_code = 0
 
-    hrms_conf = dotenv_values('.env.hrms')
-    tab_conf = dotenv_values('.env.tableau')
-    mail_conf = dotenv_values('.env.email')
+    hrms_creds = dotenv_values('.env.hrms.creds')
+    tableau_creds = dotenv_values('.env.tableau.creds')
+    mail_creds = dotenv_values('.env.email.creds')
     script_conf = dotenv_values('.env.hrms_report_sender')
 
     mail_states = MailStatus('email_states.json')
 
-    tableau_url = tab_conf['url']
+    tableau_url = tableau_creds['url']
 
     if zab_test:
         zs = ZabSender(item_key=SCRIPT_NAME)
@@ -272,33 +283,15 @@ def cli(debug: Optional[bool] = typer.Option(True, '-d', '--debug', show_default
         sys.exit(0)
 
     if load_file:
-        # log.info(f'Opening "{os.path.abspath(load_file)}"')
-        # with open(os.path.abspath(load_file), 'r') as f:
-        #     report_data = json.load(f)
-        # for i in report_data:
-        #     i['termination_date'] = datetime.datetime.strptime(i['termination_date'], '%Y-%m-%d %H:%M:%S')
-        report_data = [
-            {'userId': '12211', 'tableau_url': 'https://tableau.wargaming.net', 'displayName': 'Diana Sharapova',
-             'email': 'd_sharapova@wargaming.net', 'username': 'd_sharapova',
-             'manager': {'userId': '12151', 'displayName': 'Mariana Kazmiruk', 'email': 'm_kazmiruk@wargaming.net',
-                         'username': 'm_kazmiruk'}, 'termination_date': datetime.datetime(2023, 6, 30, 3, 0),
-             'tableau_resources': {}},
-            {'userId': '26078', 'tableau_url': 'https://tableau.wargaming.net', 'displayName': 'Mariana Kazmiruk',
-             'email': 'm_kazmiruk@wargaming.net', 'username': 'm_kazmiruk',
-             'manager': {'userId': '25929', 'displayName': 'Diana Sharapova', 'email': 'd_sharapova@wargaming.net',
-                         'username': 'd_sharapova'}, 'termination_date': datetime.datetime(2023, 6, 11, 3, 0),
-             'tableau_resources': {}},
-            {'userId': '26078', 'tableau_url': 'https://tableau.wargaming.net', 'displayName': 'Sergey Korneev',
-             'email': 'm_kazmiruk@wargaming.net', 'username': 'm_kazmiruk',
-             'manager': {'userId': '25929', 'displayName': 'Diana Sharapova', 'email': 'd_sharapova@wargaming.net',
-                         'username': 'd_sharapova'}, 'termination_date': datetime.datetime(2023, 6, 9, 3, 0),
-             'tableau_resources': {}}
-
-        ]
+        log.info(f'Opening "{os.path.abspath(load_file)}"')
+        with open(os.path.abspath(load_file), 'r') as f:
+            report_data = json.load(f)
+        for i in report_data:
+            i['termination_date'] = datetime.datetime.strptime(i['termination_date'], '%Y-%m-%d %H:%M:%S')
 
     else:
-        sfc = SuccessFactorsClient(hrms_conf.pop('url'))
-        sfc.auth(**hrms_conf)
+        sfc = SuccessFactorsClient(hrms_creds.pop('url'))
+        sfc.auth(**hrms_creds)
         users = sfc.get_leaving_users(up_to=datetime.datetime.now() + datetime.timedelta(days=30))
         report_data = []
         log.info('Leaving users in hrms:')
@@ -320,8 +313,8 @@ def cli(debug: Optional[bool] = typer.Option(True, '-d', '--debug', show_default
         print(json.dumps(report_data, indent=2, default=str))
         return
 
-    tableau_auth = TSC.TableauAuth(username=tab_conf['username'],
-                                   password=tab_conf['password'])
+    tableau_auth = TSC.TableauAuth(username=tableau_creds['username'],
+                                   password=tableau_creds['password'])
     server = TSC.Server(server_address=tableau_url,
                         use_server_version=True)
 
@@ -369,22 +362,45 @@ def cli(debug: Optional[bool] = typer.Option(True, '-d', '--debug', show_default
                                                                               'path': project_id_path[p.id]}
                                                                              for p in projects]
 
-    with EmailSender(**mail_conf) as mail_sender:
+    with EmailSender(**mail_creds) as mail_sender:
         for user_data in report_data:
             days_left = (user_data['termination_date'] - datetime.datetime.now()).days
             username = user_data['username']
-            print(days_left)
-            if days_left <= 1 and mail_states.get_second_mail_state(username):
+            log.info(f'Processing {user_data["displayName"]}, days_left: {days_left}')
+            if mail_to:
+                recipients = mail_to.split(',')
+            else:
+                recipients = list(set(script_conf['mail_to'].split() + [user_data['manager']['email'],  user_data['email']]))
+            subject = f"Moving {tableau_url.replace('https://', '')} reports of the user leaving the company"
+
+            if days_left < -5:
                 mail_states.clean(username)
-            elif days_left > 7 and not mail_states.get_first_mail_state(username):
-                log.info(f'Send first mail to {username}')
-                mail_states.set_first_mail_state(username)
+            elif not user_data.get('tableau_resources'):
+                continue
+            elif days_left < 0 and not mail_states.get_third_mail_state(username):
+                log.info(f'Send third mail to {recipients}')
+                resp = mail_sender.send_templated_mail(to=recipients,
+                                                       subject=subject,
+                                                       template_name=script_conf['mail_template'],
+                                                       data=user_data)
+                log.info(f'send_templated_mail resp: {resp}')
+                mail_states.set_third_mail_state(username)
             elif days_left < 7 and not mail_states.get_second_mail_state(username):
                 log.info(f'Send second mail to {username}')
+                resp = mail_sender.send_templated_mail(to=recipients,
+                                                       subject=subject,
+                                                       template_name=script_conf['mail_template'],
+                                                       data=user_data)
+                log.info(f'send_templated_mail resp: {resp}')
                 mail_states.set_second_mail_state(username)
-
-
-
+            elif days_left > 7 and not mail_states.get_first_mail_state(username):
+                log.info(f'Send first mail to {recipients}')
+                resp = mail_sender.send_templated_mail(to=recipients,
+                                                       subject=subject,
+                                                       template_name=script_conf['mail_template'],
+                                                       data=user_data)
+                log.info(f'send_templated_mail resp: {resp}')
+                mail_states.set_first_mail_state(username)
 
     try:
         zs = ZabSender(item_key=SCRIPT_NAME)
