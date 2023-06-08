@@ -347,7 +347,7 @@ def cli(debug: Optional[bool] = typer.Option(False, '-d', '--debug', show_defaul
                 path.reverse()
                 project_id_path[project.id] = ' / '.join(path)
 
-            log.debug(f'##############Site: {site.name} ({server.site_id})')
+            log.debug(f'Processing site: {site.name} ({server.site_id})')
             for user_data in report_data:
                 if site.content_url:
                     user_content_url = f'{server.server_address}#/site/{site.content_url}/user/local/{user_data["username"]}/content'
@@ -419,10 +419,6 @@ def cli(debug: Optional[bool] = typer.Option(False, '-d', '--debug', show_defaul
         zs.send(exit_code)
     except Exception as e:
         log.warning(f'Exception while send to Zabbix:{e}')
-
-
-
-
 
 
 if __name__ == "__main__":
