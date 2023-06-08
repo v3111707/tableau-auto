@@ -386,7 +386,7 @@ def cli(debug: Optional[bool] = typer.Option(False, '-d', '--debug', show_defaul
             if days_left < -5:
                 mail_states.clean(username)
             elif not user_data.get('tableau_resources'):
-                continue
+                log.info('tableau_resources is None. Ignore')
             elif days_left < 0 and not mail_states.get_third_mail_state(username):
                 log.info(f'Send third mail to {recipients}')
                 resp = mail_sender.send_templated_mail(to=recipients,
