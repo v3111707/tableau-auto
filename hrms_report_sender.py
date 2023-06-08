@@ -11,6 +11,7 @@ import ssl
 import os
 import datetime
 from typing import Optional
+from logging.handlers import RotatingFileHandler
 from pyzabbix import ZabbixMetric, ZabbixSender
 import tableauserverclient as TSC
 from urllib.parse import urljoin
@@ -27,19 +28,22 @@ def init_logger(debug: bool = False, log_names: list = None, path: str = None):
         log_names = ['main']
     for log_name in log_names:
         logger = logging.getLogger(log_name)
+        logger.setLevel(logging.DEBUG)
         sh = logging.StreamHandler(sys.stdout)
         sh.setFormatter(logging.Formatter('%(asctime)s - %(name)s: %(message)s'))
-        logger.addHandler(sh)
         if debug:
-            logger.setLevel(logging.DEBUG)
-            logger.debug('Set level DEBUG')
+            sh.setLevel(logging.DEBUG)
+
         else:
-            logger.setLevel(logging.INFO)
+            sh.setLevel(logging.INFO)
+        logger.addHandler(sh)
         if path:
-            handler = logging.handlers.RotatingFileHandler(path,
-                                                           maxBytes=4096,
-                                                           backupCount=3)
-            logger.addHandler(handler)
+            fh = RotatingFileHandler(path,
+                                     maxBytes=4096,
+                                     backupCount=3)
+            # fh.setLevel(logging.DEBUG)
+            logger.addHandler(fh)
+    logger.debug('Set level DEBUG')
 
 
 def convert_date(date: str):
@@ -269,7 +273,7 @@ def cli(debug: Optional[bool] = typer.Option(False, '-d', '--debug', show_defaul
                                                 help='Send to zabbox "1"'),
         load_file: Optional[str] = typer.Option(None, '-l', show_default=True)):
 
-    init_logger(debug=debug, log_names=['main'])
+    init_logger(debug=debug, log_names=['main'], path=SCRIPT_NAME + '.log')
     log = logging.getLogger('main')
 
     exit_code = 0
