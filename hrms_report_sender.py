@@ -153,7 +153,8 @@ class EmailSender:
             # self.logger.debug(f'{ehlo_resp=}')
             if self.username and self.password:
                 server.login(user=self.username, password=self.password)
-            self.logger.info(f'Sending mail form "{self.sender}" to; "{to}" \n {message.as_string()}')
+            # self.logger.info(f'Sending mail form "{self.sender}" to; "{to}" \n {message.as_string()}')
+            self.logger.info(f'Sending mail form "{self.sender}" to; "{to}" ')
             sendmail_resp = server.sendmail(from_addr=self.sender, to_addrs=to, msg=message.as_string())
             self.logger.debug(f'sendmail_resp: {sendmail_resp}')
         return sendmail_resp
