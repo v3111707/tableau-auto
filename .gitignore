@@ -8,3 +8,4 @@ venv*/
 remove_group_all_users.log*
 sandbox*
 .env*
+hrms_test.json
