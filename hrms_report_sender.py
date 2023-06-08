@@ -163,7 +163,12 @@ class SuccessFactorsClient:
         }
 
         resp = requests.post(url=url, params=params, headers=headers)
-        resp.raise_for_status()
+        try:
+            resp.raise_for_status()
+        except requests.exceptions.HTTPError as exp:
+            if resp.status_code == 401:
+                logging.error(resp.json())
+            raise exp
         self.token = resp.json()
 
     def get_leaving_users(self, up_to: datetime):
@@ -209,8 +214,8 @@ app = typer.Typer(add_completion=False)
 @app.command(context_settings=dict(help_option_names=["-h", "--help"]))
 def cli(debug: Optional[bool] = typer.Option(True, '-d', '--debug', show_default=True),
         mail_to: Optional[str] = typer.Option(False, '-m', '--mail_to', show_default=False),
-        print_data: Optional[bool] = typer.Option(False, '-p', show_default=True),
-        laod_file: Optional[bool] = typer.Option(False, '-l', show_default=True)):
+        print_data: Optional[bool] = typer.Option(False, '-p', show_default=True, help='Print data from HRMS and exit'),
+        load_file: Optional[str] = typer.Option(None, '-l', show_default=True)):
 
     init_logger(debug=debug, log_names=['main'])
     log = logging.getLogger('main')
@@ -224,7 +229,7 @@ def cli(debug: Optional[bool] = typer.Option(True, '-d', '--debug', show_default
 
     tableau_url = tab_conf['url']
 
-    if laod_file:
+    if load_file:
         log.info(f'Opening "{os.path.abspath(laod_file)}"')
         with open(os.path.abspath(laod_file), 'r') as f:
             report_data = json.load(f)
