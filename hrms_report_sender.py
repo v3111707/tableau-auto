@@ -11,12 +11,15 @@ import ssl
 import os
 import datetime
 from typing import Optional
+from pyzabbix import ZabbixMetric, ZabbixSender
 import tableauserverclient as TSC
 from urllib.parse import urljoin
 from dotenv import dotenv_values
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from jinja2 import Environment, FileSystemLoader
+
+SCRIPT_NAME = os.path.basename(__file__)
 
 
 def init_logger(debug: bool = False, log_names: list = None):
@@ -37,6 +40,22 @@ def init_logger(debug: bool = False, log_names: list = None):
 def convert_date(date: str):
     timestamp = int(re.findall(r'\((\d+)\D', date)[0])
     return datetime.datetime.fromtimestamp(timestamp / 1000)
+
+
+class ZabSender(object):
+    def __init__(self, item_key: str, config_file:str = '/etc/zabbix/zabbix_agentd.conf'):
+        self.logger = logging.getLogger('main.Zabbix_sender')
+        self.item_key = item_key
+        zabbix_config = open(config_file).read()
+        self.server = re.search(r'ServerActive=(.+)', zabbix_config).group(1)
+        self.logger.debug(f"self.server: {self.server}")
+        self.hostname = re.search(r'Hostname=(.+)', zabbix_config).group(1)
+        self.logger.debug(f"self.hostname: {self.hostname}")
+
+    def send(self, value):
+        packet = [ZabbixMetric(self.hostname, self.item_key, value)]
+        self.logger.info(f"Send {packet} to {self.server}")
+        return ZabbixSender(zabbix_server=self.server).send(packet)
 
 
 class MailStatus:
@@ -214,12 +233,16 @@ app = typer.Typer(add_completion=False)
 @app.command(context_settings=dict(help_option_names=["-h", "--help"]))
 def cli(debug: Optional[bool] = typer.Option(True, '-d', '--debug', show_default=True),
         mail_to: Optional[str] = typer.Option(False, '-m', '--mail_to', show_default=False),
-        print_data: Optional[bool] = typer.Option(False, '-p', show_default=True, help='Print data from HRMS and exit'),
+        print_data: Optional[bool] = typer.Option(False, '-p', show_default=True,
+                                                  help='Print data from HRMS and exit'),
+        zab_test: Optional[bool] = typer.Option(False, '--zt', show_default=True,
+                                                help='Send to zabbox "1"'),
         load_file: Optional[str] = typer.Option(None, '-l', show_default=True)):
 
     init_logger(debug=debug, log_names=['main'])
     log = logging.getLogger('main')
 
+    exit_code = 0
     mail_states = MailStatus('email_states.json')
 
     hrms_conf = dotenv_values('.env.hrms')
@@ -229,10 +252,39 @@ def cli(debug: Optional[bool] = typer.Option(True, '-d', '--debug', show_default
 
     tableau_url = tab_conf['url']
 
+
+    if zab_test:
+
+        zs = ZabSender(item_key=SCRIPT_NAME)
+        zs.send(1)
+        sys.exit(0)
+
+
     if load_file:
-        log.info(f'Opening "{os.path.abspath(laod_file)}"')
-        with open(os.path.abspath(laod_file), 'r') as f:
-            report_data = json.load(f)
+        # log.info(f'Opening "{os.path.abspath(load_file)}"')
+        # with open(os.path.abspath(load_file), 'r') as f:
+        #     report_data = json.load(f)
+        # for i in report_data:
+        #     i['termination_date'] = datetime.datetime.strptime(i['termination_date'], '%Y-%m-%d %H:%M:%S')
+        report_data = [
+            {'userId': '12211', 'tableau_url': 'https://tableau.wargaming.net', 'displayName': 'Diana Sharapova',
+             'email': 'd_sharapova@wargaming.net', 'username': 'd_sharapova',
+             'manager': {'userId': '12151', 'displayName': 'Mariana Kazmiruk', 'email': 'm_kazmiruk@wargaming.net',
+                         'username': 'm_kazmiruk'}, 'termination_date': datetime.datetime(2023, 6, 30, 3, 0),
+             'tableau_resources': {}},
+            {'userId': '26078', 'tableau_url': 'https://tableau.wargaming.net', 'displayName': 'Mariana Kazmiruk',
+             'email': 'm_kazmiruk@wargaming.net', 'username': 'm_kazmiruk',
+             'manager': {'userId': '25929', 'displayName': 'Diana Sharapova', 'email': 'd_sharapova@wargaming.net',
+                         'username': 'd_sharapova'}, 'termination_date': datetime.datetime(2023, 6, 11, 3, 0),
+             'tableau_resources': {}},
+            {'userId': '26078', 'tableau_url': 'https://tableau.wargaming.net', 'displayName': 'Sergey Korneev',
+             'email': 'm_kazmiruk@wargaming.net', 'username': 'm_kazmiruk',
+             'manager': {'userId': '25929', 'displayName': 'Diana Sharapova', 'email': 'd_sharapova@wargaming.net',
+                         'username': 'd_sharapova'}, 'termination_date': datetime.datetime(2023, 6, 9, 3, 0),
+             'tableau_resources': {}}
+
+        ]
+
     else:
         sfc = SuccessFactorsClient(hrms_conf.pop('url'))
         sfc.auth(**hrms_conf)
@@ -256,6 +308,71 @@ def cli(debug: Optional[bool] = typer.Option(True, '-d', '--debug', show_default
     if print_data:
         print(json.dumps(report_data, indent=2, default=str))
         return
+
+    tableau_auth = TSC.TableauAuth(username=tab_conf['username'],
+                                   password=tab_conf['password'])
+    server = TSC.Server(server_address=tableau_url,
+                        use_server_version=True)
+
+    with server.auth.sign_in(tableau_auth):
+        for site in TSC.Pager(server.sites):
+            server.auth.switch_site(site)
+            all_projects = list(TSC.Pager(server.projects))
+            all_projects = {i.id: i for i in all_projects}
+            project_id_path = {}
+            for _, project in all_projects.items():
+                path = []
+                parent_id = project.parent_id
+                while True:
+                    if parent_id:
+                        path.append(all_projects[parent_id].name)
+                        parent_id = all_projects[parent_id].parent_id
+                    else:
+                        break
+                path.append('Home')
+                path.reverse()
+                project_id_path[project.id] = ' / '.join(path)
+
+            log.debug(f'##############Site: {site.name} ({server.site_id})')
+            for user_data in report_data:
+                if site.content_url:
+                    user_content_url = f'{server.server_address}#/site/{site.content_url}/user/local/{user_data["username"]}/content'
+                else:
+                    user_content_url = f'{server.server_address}#/user/local/{user_data["username"]}/content'
+                # user_data['user_content_url'] = user_content_url
+
+                req_option = TSC.RequestOptions()
+                req_option.filter.add(TSC.Filter(TSC.RequestOptions.Field.OwnerEmail,
+                                                 TSC.RequestOptions.Operator.Equals,
+                                                 user_data['email']))
+
+                workbooks = list(TSC.Pager(server.workbooks, req_option))
+                projects = list(TSC.Pager(server.projects, req_option))
+                if any([workbooks, projects]):
+                    user_data['tableau_resources'][site.name] = {}
+                    user_data['tableau_resources'][site.name]['user_content_url'] = user_content_url
+                    user_data['tableau_resources'][site.name]['workbooks'] = [{'name': w.name,
+                                                                               'project_name': w.project_name}
+                                                                              for w in workbooks]
+                    user_data['tableau_resources'][site.name]['projects'] = [{'name': p.name,
+                                                                              'path': project_id_path[p.id]}
+                                                                             for p in projects]
+
+    with EmailSender(**mail_conf) as mail_sender:
+        for user_data in report_data:
+            days_left = (user_data['termination_date'] - datetime.datetime.now()).days
+            print(days_left)
+            match days_left:
+                case _ if days_left <= 1:
+                    print(user_data['displayName'])
+                    print('days_left < 1')
+                case _ if 7 < days_left:
+                    print(user_data['displayName'])
+                    print(' 7 < days_left')
+                case _ if days_left < 7:
+                    print(user_data['displayName'])
+                    print('days_left < 7')
+
 
 
 if __name__ == "__main__":
