@@ -38,9 +38,11 @@ def init_logger(debug: bool = False, log_names: list = None, path: str = None):
             sh.setLevel(logging.INFO)
         logger.addHandler(sh)
         if path:
+
             fh = RotatingFileHandler(path,
                                      maxBytes=4194304,
                                      backupCount=3)
+            fh.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
             # fh.setLevel(logging.DEBUG)
             logger.addHandler(fh)
     logger.debug('Set level DEBUG')
