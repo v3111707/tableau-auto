@@ -247,10 +247,10 @@ def cli(debug: Optional[bool] = typer.Option(True, '-d', '--debug', show_default
             manager_data = sfc.get_user_by_id(manager_id)
             username = user_data['username']
 
-            report_data.append(user_data | {'manager': manager_data,
-                                            'termination_date': termination_date,
-                                            'tableau_url': tableau_url,
-                                            'tableau_resources': {}})
+            report_data.append( {**user_data, **{'manager': manager_data,
+                                                 'termination_date': termination_date,
+                                                 'tableau_url': tableau_url,
+                                                 'tableau_resources': {}}})
             log.info(
                 f'User:{username},  termination date:{termination_date.date()}, manager\'s email: {manager_data["email"]}')
     if print_data:
