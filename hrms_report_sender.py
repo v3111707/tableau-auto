@@ -57,9 +57,9 @@ class ZabSender(object):
         self.item_key = item_key
         zabbix_config = open(config_file).read()
         self.server = re.search(r'ServerActive=(.+)', zabbix_config).group(1)
-        self.logger.debug(f"self.server: {self.server}")
+        # self.logger.debug(f"self.server: {self.server}")
         self.hostname = re.search(r'Hostname=(.+)', zabbix_config).group(1)
-        self.logger.debug(f"self.hostname: {self.hostname}")
+        # self.logger.debug(f"self.hostname: {self.hostname}")
 
     def send(self, value):
         packet = [ZabbixMetric(self.hostname, self.item_key, value)]
