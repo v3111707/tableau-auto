@@ -386,7 +386,7 @@ def cli(debug: Optional[bool] = typer.Option(True, '-d', '--debug', show_default
                 log.info(f'send_templated_mail resp: {resp}')
                 mail_states.set_third_mail_state(username)
             elif days_left < 7 and not mail_states.get_second_mail_state(username):
-                log.info(f'Send second mail to {username}')
+                log.info(f'Send second mail to {recipients}')
                 resp = mail_sender.send_templated_mail(to=recipients,
                                                        subject=subject,
                                                        template_name=script_conf['mail_template'],
