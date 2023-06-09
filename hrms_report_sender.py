@@ -382,7 +382,8 @@ def cli(debug: Optional[bool] = typer.Option(False, '-d', '--debug', show_defaul
             if mail_to:
                 recipients = mail_to.split(',')
             else:
-                recipients = list(set(script_conf['mail_to'].split() + [user_data['manager']['email'],  user_data['email']]))
+                # recipients = list(set(script_conf['mail_to'].split() + [user_data['manager']['email'],  user_data['email']]))
+                recipients = mail_to.split(',')
             subject = f"Moving {tableau_url.replace('https://', '')} reports of the user leaving the company"
 
             if days_left < -5:
