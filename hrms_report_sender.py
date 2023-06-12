@@ -21,6 +21,7 @@ from email.mime.text import MIMEText
 from jinja2 import Environment, FileSystemLoader
 
 SCRIPT_NAME = os.path.basename(__file__)
+WORKING_DIR = os.path.dirname(__file__)
 
 
 def init_logger(debug: bool = False, log_names: list = None, path: str = None):
@@ -280,10 +281,13 @@ def cli(debug: Optional[bool] = typer.Option(False, '-d', '--debug', show_defaul
 
     exit_code = 0
 
-    hrms_creds = dotenv_values('.env.hrms.creds')
-    tableau_creds = dotenv_values('.env.tableau.creds')
-    mail_creds = dotenv_values('.env.email.creds')
-    script_conf = dotenv_values('.env.hrms_report_sender')
+
+    abs_path = lambda p: os.path.join(WORKING_DIR, p)
+
+    hrms_creds = dotenv_values(abs_path('.env.hrms.creds'))
+    tableau_creds = dotenv_values(abs_path('.env.tableau.creds'))
+    mail_creds = dotenv_values(abs_path('.env.email.creds'))
+    script_conf = dotenv_values(abs_path('.env.hrms_report_sender'))
 
     mail_states = MailStatus('hrms_report_sender_email_states.json')
 
