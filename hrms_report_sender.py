@@ -281,7 +281,6 @@ def cli(debug: Optional[bool] = typer.Option(False, '-d', '--debug', show_defaul
 
     exit_code = 0
 
-
     abs_path = lambda p: os.path.join(WORKING_DIR, p)
 
     hrms_creds = dotenv_values(abs_path('.env.hrms.creds'))
