@@ -285,6 +285,7 @@ def cli(debug: Optional[bool] = typer.Option(False, '-d', '--debug', show_defaul
 
     hrms_creds = dotenv_values(abs_path('.env.hrms.creds'))
     tableau_creds = dotenv_values(abs_path('.env.tableau.creds'))
+    # tableau_creds = dotenv_values(abs_path('.env.tableau.dwh'))
     mail_creds = dotenv_values(abs_path('.env.email.creds'))
     script_conf = dotenv_values(abs_path('.env.hrms_report_sender'))
 
@@ -378,10 +379,11 @@ def cli(debug: Optional[bool] = typer.Option(False, '-d', '--debug', show_defaul
                                                                              for p in projects]
 
     with EmailSender(**mail_creds) as mail_sender:
-        for user_data in report_data:
+        _ = [log.info(f'{i["username"]} doesn\'t have any resources. Ignore') for i in report_data if not i['tableau_resources']]
+        for user_data in [i for i in report_data if i['tableau_resources']]:
             days_left = (user_data['termination_date'] - datetime.datetime.now()).days
             username = user_data['username']
-            log.info(f'Processing {user_data["displayName"]}, days_left: {days_left}')
+            log.info(f'Processing {user_data["username"]}, days_left: {days_left}')
             if mail_to:
                 recipients = mail_to.split(',')
             else:
@@ -390,7 +392,7 @@ def cli(debug: Optional[bool] = typer.Option(False, '-d', '--debug', show_defaul
             subject = f"Moving {tableau_url.replace('https://', '')} reports of the user leaving the company"
 
             if days_left < -5:
-                log.info('days_left less then 5')
+                log.info('days_left less then -5; Clean')
                 mail_states.clean(username)
             elif not user_data.get('tableau_resources'):
                 log.info('tableau_resources is None. Ignore')
