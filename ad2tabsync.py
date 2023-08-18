@@ -337,6 +337,8 @@ class AD2TabSync(object):
         get_name = lambda n: re.sub(r'\s\(\w+\)$', '', n)
         get_tag = lambda n: re.findall(r'\s\(\w+\)$|$', n)[0]
 
+        for user in tableau_site_users:
+
             auser_obj = self.ad.get_user_by_samaccountname(user.name)
             if not auser_obj:
                 continue
