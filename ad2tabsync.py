@@ -329,30 +329,36 @@ class AD2TabSync(object):
                 new_user.password = password
                 if self.noop:
                     _ = self.tab.users.update(new_user)
-        self.logger.debug("Start revision userdata on the site")
 
+        self.logger.debug("Start revision userdata on the site")
         tableau_site_users = [u for u in TSC.Pager(self.tab.users) if u.site_role != 'Unlicensed' and u.name not in self.serviceaccounts]
+
+        # WGSA-50133
+        get_name = lambda n: re.sub(r'\s\(\w+\)$', '', n)
+        get_tag = lambda n: re.findall(r'\s\(\w+\)$|$', n)[0]
+
         for user in tableau_site_users:
-            #It's tableau server bug.
-            #Tableau returns users tho was deleted in the previous step.
-            try:
-                tuser_obj = self.tab.users.get_by_id(user.id)
-            except Exception as e:
-                self.logger.warning(f"Error while self.tab.users.get_by_id{e}")
-            else:
-                auser_obj = self.ad.get_user_by_samaccountname(tuser_obj.name)
-                if auser_obj:
-                    #WGSA-50133
-                    get_name = lambda n: re.sub(r'\(\w+\)$', '', n)
-                    get_tag = lambda n: re.findall(r'\(\w+\)$|$', n)[0]
-                    if auser_obj[0].name.value != tuser_obj.fullname and auser_obj[0].name.value != get_name(tuser_obj.fullname):
-                        new_name = auser_obj[0].name.value + get_tag(tuser_obj.fullname)
-                        self.logger.info(
-                            f"Changing {tuser_obj.name}'s fullname: {tuser_obj.fullname} -> {new_name}")
+            if '(' in user.fullname:
+                print(user.fullname)
+
+            auser_obj = self.ad.get_user_by_samaccountname(user.name)
+            if not auser_obj:
+                continue
+
+            if auser_obj[0].name.value != user.fullname and auser_obj[0].name.value != get_name(user.fullname):
+                new_name = auser_obj[0].name.value + get_tag(user.fullname)
+                self.logger.info(
+                    f"Changing {user.name}'s fullname: {user.fullname} -> {new_name}")
+                if self.noop:
+                    # It's tableau server bug.
+                    # Tableau returns users tho was deleted in the previous step.
+                    try:
+                        tuser_obj = self.tab.users.get_by_id(user.id)
+                    except Exception as e:
+                        self.logger.warning(f"Error while self.tab.users.get_by_id{e}")
+                    else:
                         tuser_obj.fullname = new_name
-                        if self.noop:
-                            self.tab.users.update(tuser_obj)
-                            tuser_obj.email = auser_obj[0].mail.value
+                        self.tab.users.update(tuser_obj)
 
     def _sync_site_groups(self):
         self.logger.debug('Revision groups on site')
